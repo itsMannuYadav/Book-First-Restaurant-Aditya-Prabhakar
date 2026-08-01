@@ -68,6 +68,11 @@ function matchesTab(order: OwnerOrderView, tab: FilterTab): boolean {
   );
 }
 
+function extractHttpsUrl(text: string): string | null {
+  const match = text.match(/https:\/\/[^\s]+/);
+  return match?.[0] ?? null;
+}
+
 export function OrdersBoard() {
   const { restaurant, loading: restaurantLoading } = useOwnerRestaurant();
   const [orders, setOrders] = useState<OwnerOrderView[]>([]);
@@ -180,12 +185,33 @@ export function OrdersBoard() {
 
       {error ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {error}
-          <p className="mt-2 text-xs opacity-80">
-            If this mentions an index, open the link in the browser console /
-            Firebase error and create the composite index for orders
-            (restaurantId + createdAt).
-          </p>
+          <p className="font-medium break-words">{error}</p>
+          {/index/i.test(error) ? (
+            <div className="mt-2 space-y-2 text-xs leading-relaxed opacity-90">
+              <p>
+                Firebase needs a one-time composite index for orders. Create it,
+                wait until status is <strong>Enabled</strong>, then refresh.
+              </p>
+              {extractHttpsUrl(error) ? (
+                <a
+                  href={extractHttpsUrl(error)!}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(
+                    buttonVariants({ size: "sm" }),
+                    "inline-flex bg-[#14110e] text-[#f4efe6] hover:bg-[#2a241c]",
+                  )}
+                >
+                  Create Firestore index
+                </a>
+              ) : null}
+            </div>
+          ) : /permission/i.test(error) ? (
+            <p className="mt-2 text-xs leading-relaxed opacity-90">
+              Deploy <code>web/firestore.rules</code> in Firebase Console →
+              Firestore → Rules → Publish, then refresh.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

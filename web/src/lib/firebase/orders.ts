@@ -2,7 +2,6 @@ import {
   collection,
   doc,
   onSnapshot,
-  orderBy,
   query,
   updateDoc,
   where,
@@ -57,16 +56,18 @@ export function subscribeOwnerOrders(
   onError?: (message: string) => void,
 ): Unsubscribe {
   const { db } = requireFirebase();
+  // Equality-only query avoids requiring a composite index; sort client-side.
   const q = query(
     collection(db, COLLECTIONS.orders),
     where("restaurantId", "==", restaurantId),
-    orderBy("createdAt", "desc"),
   );
 
   return onSnapshot(
     q,
     (snap) => {
-      const orders = snap.docs.map((d) => mapOwnerOrder(d.id, d.data()));
+      const orders = snap.docs
+        .map((d) => mapOwnerOrder(d.id, d.data()))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
       onOrders(orders);
     },
     (err) => {
