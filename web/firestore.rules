@@ -60,25 +60,26 @@ service cloud.firestore {
     }
 
     // Orders: guests never write directly — only Admin SDK (API) creates.
-    // Owners can read and update status fields for their restaurant.
+    // Owners can read and update status for their restaurant.
     match /orders/{orderId} {
       allow read: if ownsRestaurant(resource.data.restaurantId);
-      allow create: if false;
-      allow delete: if false;
+
+      allow create, delete: if false;
+
       allow update: if ownsRestaurant(resource.data.restaurantId)
         && validOwnerOrderTransition()
+        && validOrderStatus(request.resource.data.status)
+        // Immutable order identity / money fields
         && request.resource.data.restaurantId == resource.data.restaurantId
         && request.resource.data.shortCode == resource.data.shortCode
         && request.resource.data.tableId == resource.data.tableId
         && request.resource.data.tableLabel == resource.data.tableLabel
-        && request.resource.data.items == resource.data.items
         && request.resource.data.currency == resource.data.currency
         && request.resource.data.total == resource.data.total
-        && request.resource.data.guestLocation == resource.data.guestLocation
         && request.resource.data.accessTokenHash == resource.data.accessTokenHash
         && request.resource.data.clientIdempotencyKey == resource.data.clientIdempotencyKey
         && request.resource.data.createdAt == resource.data.createdAt
-        && validOrderStatus(request.resource.data.status)
+        // Only status workflow fields may change (plus optional owner note)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'ownerNote', 'updatedAt', 'statusHistory']);
     }

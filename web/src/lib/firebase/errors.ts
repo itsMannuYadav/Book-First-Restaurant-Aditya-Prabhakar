@@ -24,7 +24,7 @@ export function getFirebaseErrorMessage(error: unknown): string {
       case "auth/configuration-not-found":
         return "Firebase Authentication is not set up for this project yet. In Firebase Console open Authentication → Get started, then enable Email/Password and Google. Restart npm run dev after that.";
       case "permission-denied":
-        return "Permission denied. Open Firebase Console → Firestore → Rules, paste web/firestore.rules, click Publish, wait 30 seconds, then try again.";
+        return "Permission denied by Firestore. If you just changed rules, wait ~30s and retry. If this is Confirm/Decline on an order, re-publish the latest web/firestore.rules (order update rules were tightened by mistake earlier). Also make sure you’re still signed in as the restaurant owner.";
       case "failed-precondition":
         return "Firestore needs an index for this query. Open the error link in the browser console to create it, then retry.";
       default:
