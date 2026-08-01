@@ -87,10 +87,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         code: "SERVER_ERROR",
-        message:
-          process.env.NODE_ENV === "development"
-            ? `Order failed: ${detail}`
-            : "Something went wrong placing your order. Please try again.",
+        message: `Order failed: ${detail}`,
       },
       { status: 500 },
     );

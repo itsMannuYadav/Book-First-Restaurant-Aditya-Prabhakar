@@ -405,7 +405,7 @@ export async function placeOrder(
   const guestNote = body.guestNote?.trim() || undefined;
 
   const orderRef = db.collection(COLLECTIONS.orders).doc();
-  const payload: Omit<Order, "id"> = {
+  const payload: Record<string, unknown> = {
     restaurantId: body.restaurantId,
     shortCode,
     tableId: table.id,
@@ -414,14 +414,15 @@ export async function placeOrder(
     currency,
     total,
     status: "pending",
-    guestNote,
-    ...(guestLocation ? { guestLocation } : {}),
     accessTokenHash,
     clientIdempotencyKey: body.idempotencyKey,
     createdAt: timestamp,
     updatedAt: timestamp,
     statusHistory: [{ status: "pending", at: timestamp }],
   };
+  // Firestore rejects `undefined` field values.
+  if (guestNote) payload.guestNote = guestNote;
+  if (guestLocation) payload.guestLocation = guestLocation;
 
   const batch = db.batch();
   batch.set(orderRef, payload);
