@@ -8,4 +8,6 @@ export const COLLECTIONS = {
   categories: "categories",
   menuItems: "menuItems",
   orders: "orders",
+  /** Server-only idempotency keys for guest order placement. */
+  orderIdempotency: "orderIdempotency",
 } as const;

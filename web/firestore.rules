@@ -82,5 +82,10 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'ownerNote', 'updatedAt', 'statusHistory']);
     }
+
+    // Idempotency ledger — Admin SDK only.
+    match /orderIdempotency/{keyId} {
+      allow read, write: if false;
+    }
   }
 }

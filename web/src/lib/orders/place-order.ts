@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "crypto";
 import type { DocumentData } from "firebase-admin/firestore";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
@@ -257,30 +258,29 @@ export async function placeOrder(
     };
   }
 
-  // Idempotency: return existing order if same key was used recently.
-  const idempotentQuery = await db
-    .collection(COLLECTIONS.orders)
-    .where("restaurantId", "==", body.restaurantId)
-    .where("clientIdempotencyKey", "==", body.idempotencyKey)
-    .limit(1)
-    .get();
+  // Idempotency via doc id — no composite index required.
+  const idempotencyId = createHash("sha256")
+    .update(`${body.restaurantId}:${body.idempotencyKey}`)
+    .digest("hex");
+  const idempotencyRef = db
+    .collection(COLLECTIONS.orderIdempotency)
+    .doc(idempotencyId);
+  const idempotencySnap = await idempotencyRef.get();
 
-  if (!idempotentQuery.empty) {
-    const existing = idempotentQuery.docs[0]!;
-    const data = existing.data();
+  if (idempotencySnap.exists) {
+    const data = idempotencySnap.data()!;
     const createdAt = Date.parse(String(data.createdAt ?? ""));
     if (
       Number.isFinite(createdAt) &&
       Date.now() - createdAt < ORDER_IDEMPOTENCY_TTL_MS
     ) {
-      // Cannot return the original token (only hash stored). Tell client to use stored token.
       return {
         ok: false,
         status: 409,
         code: "IDEMPOTENCY_REPLAY",
         message:
           "This order was already submitted. Check your order ticket on this device.",
-        meta: { orderId: existing.id },
+        meta: { orderId: String(data.orderId ?? "") },
       };
     }
   }
@@ -372,7 +372,14 @@ export async function placeOrder(
     statusHistory: [{ status: "pending", at: timestamp }],
   };
 
-  await orderRef.set(payload);
+  const batch = db.batch();
+  batch.set(orderRef, payload);
+  batch.set(idempotencyRef, {
+    orderId: orderRef.id,
+    restaurantId: body.restaurantId,
+    createdAt: timestamp,
+  });
+  await batch.commit();
 
   return {
     ok: true,
