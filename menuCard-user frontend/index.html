@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cafe Aroma - Menu</title>
+  <meta name="description" content="Artisan Culinary & Specialty Coffee Menu Card">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       CSS DESIGN SYSTEM & THEME TOKENS
+       ========================================== */
+    :root {
+      --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+      --transition-speed: 0.35s;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+    }
+
+    /* THEME 1: DARK LUXURY (Default) */
+    [data-theme="dark"] {
+      --bg-page: #0B0B0D;
+      --bg-header-overlay: linear-gradient(180deg, rgba(11, 11, 13, 0.4) 0%, rgba(11, 11, 13, 0.95) 80%, #0B0B0D 100%);
+      --bg-card: rgba(20, 20, 24, 0.85);
+      --bg-card-hover: rgba(28, 28, 34, 0.95);
+      --bg-surface: #151518;
+      --bg-pill: rgba(255, 255, 255, 0.06);
+      --bg-pill-active: linear-gradient(135deg, #D4AF37 0%, #AA771C 100%);
+      --text-pill-active: #0B0B0D;
+      --border-color: rgba(212, 175, 55, 0.22);
+      --border-color-muted: rgba(255, 255, 255, 0.08);
+      --text-main: #F4F4F6;
+      --text-muted: #A1A1AA;
+      --text-accent: #E6C875;
+      --heading-font: 'Playfair Display', serif;
+      --gold-gradient: linear-gradient(135deg, #FFF5C0 0%, #D4AF37 50%, #AA771C 100%);
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --badge-bg: rgba(212, 175, 55, 0.15);
+      --badge-text: #F3E5AB;
+      --badge-border: rgba(212, 175, 55, 0.4);
+      --veg-color: #22c55e;
+      --nonveg-color: #ef4444;
+      --accent-glow: rgba(212, 175, 55, 0.15);
+    }
+
+    /* THEME 2: RUSTIC WOODEN */
+    [data-theme="rustic"] {
+      --bg-page: #1D140F;
+      --bg-header-overlay: linear-gradient(180deg, rgba(29, 20, 15, 0.5) 0%, rgba(245, 237, 224, 0.95) 85%, #F5EDE0 100%);
+      --bg-card: #FAF4EB;
+      --bg-card-hover: #FFFFFF;
+      --bg-surface: #F5EDE0;
+      --bg-pill: rgba(74, 48, 30, 0.08);
+      --bg-pill-active: #7A3E22;
+      --text-pill-active: #FFFDF9;
+      --border-color: #D9C3B0;
+      --border-color-muted: #E8DCCF;
+      --text-main: #2C1A11;
+      --text-muted: #6E5444;
+      --text-accent: #A64B2A;
+      --heading-font: 'Cormorant Garamond', serif;
+      --gold-gradient: linear-gradient(135deg, #A64B2A 0%, #7A3E22 100%);
+      --card-shadow: 0 6px 20px rgba(44, 26, 17, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      --badge-bg: rgba(166, 75, 42, 0.1);
+      --badge-text: #8B3418;
+      --badge-border: rgba(166, 75, 42, 0.3);
+      --veg-color: #15803d;
+      --nonveg-color: #b91c1c;
+      --accent-glow: rgba(166, 75, 42, 0.12);
+    }
+
+    /* THEME 3: MINIMAL WHITE */
+    [data-theme="minimal"] {
+      --bg-page: #F8FAFC;
+      --bg-header-overlay: linear-gradient(180deg, rgba(248, 250, 252, 0.3) 0%, rgba(248, 250, 252, 0.95) 80%, #F8FAFC 100%);
+      --bg-card: #FFFFFF;
+      --bg-card-hover: #FFFFFF;
+      --bg-surface: #FFFFFF;
+      --bg-pill: #F1F5F9;
+      --bg-pill-active: #0F172A;
+      --text-pill-active: #FFFFFF;
+      --border-color: #E2E8F0;
+      --border-color-muted: #F1F5F9;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --text-accent: #2563EB;
+      --heading-font: 'Outfit', sans-serif;
+      --gold-gradient: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+      --card-shadow: 0 4px 18px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
+      --badge-bg: #EFF6FF;
+      --badge-text: #1D4ED8;
+      --badge-border: #BFDBFE;
+      --veg-color: #16a34a;
+      --nonveg-color: #dc2626;
+      --accent-glow: rgba(37, 99, 235, 0.08);
+    }
+
+    /* Override body background for Rustic theme container switch */
+    [data-theme="rustic"] body {
+      background-color: var(--bg-surface);
+    }
+
+    /* ==========================================
+       BASE STYLES & RESET
+       ========================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      line-height: 1.6;
+      transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+      padding-bottom: 100px;
+    }
+
+    /* Typography */
+    h1, h2, h3, .theme-heading {
+      font-family: var(--heading-font);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* ==========================================
+       TOP CONTROL BAR (THEME SWITCHER & SEARCH)
+       ========================================== */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color-muted);
+      padding: 12px 20px;
+      transition: background var(--transition-speed), border-color var(--transition-speed);
+    }
+
+    .top-bar-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .theme-toggle-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg-pill);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border-color-muted);
+      gap: 4px;
+    }
+
+    .theme-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .theme-btn.active {
+      background: var(--bg-pill-active);
+      color: var(--text-pill-active);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .theme-btn:hover:not(.active) {
+      color: var(--text-main);
+    }
+
+    /* Search Box */
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--bg-pill);
+      border: 1px solid var(--border-color-muted);
+      color: var(--text-main);
+      padding: 8px 16px 8px 38px;
+      border-radius: var(--radius-full);
+      font-size: 0.88rem;
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .search-box input:focus {
+      border-color: var(--text-accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+    }
+
+    /* ==========================================
+       HERO HEADER SECTION
+       ========================================== */
+    .hero-header {
+      position: relative;
+      width: 100%;
+      min-height: 280px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-header-overlay);
+      transition: background var(--transition-speed) ease;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      width: 100%;
+      padding: 40px 20px 24px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .restaurant-logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--border-color);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+      margin-bottom: 14px;
+      background: #000;
+      transition: border-color var(--transition-speed);
+    }
+
+    .restaurant-name {
+      font-size: 2.4rem;
+      margin-bottom: 6px;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .restaurant-tagline {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .meta-badges {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.82rem;
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-pill);
+      border: 1px solid var(--border-color-muted);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      color: var(--text-main);
+    }
+
+    /* ==========================================
+       CATEGORY QUICK NAV & DIET FILTERS
+       ========================================== */
+    .filter-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 20px 0 20px;
+    }
+
+    .scroll-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .scroll-pills::-webkit-scrollbar { display: none; }
+
+    .diet-pill {
+      border: 1px solid var(--border-color-muted);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .diet-pill.active {
+      border-color: var(--text-accent);
+      color: var(--text-accent);
+      background: var(--accent-glow);
+    }
+
+    .category-nav {
+      position: sticky;
+      top: 60px;
+      z-index: 90;
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border-color-muted);
+      padding: 10px 20px;
+      margin-top: 12px;
+      transition: background var(--transition-speed);
+    }
+
+    .category-nav-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .category-nav-inner::-webkit-scrollbar { display: none; }
+
+    .cat-tab {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: all 0.25s ease;
+    }
+
+    .cat-tab.active {
+      color: var(--text-accent);
+      border-bottom-color: var(--text-accent);
+    }
+
+    /* ==========================================
+       MENU CONTAINER & CARDS
+       ========================================== */
+    .menu-container {
+      max-width: 900px;
+      margin: 24px auto 0 auto;
+      padding: 0 20px;
+    }
+
+    .category-section {
+      margin-bottom: 40px;
+      scroll-margin-top: 120px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .category-icon {
+      font-size: 1.5rem;
+    }
+
+    .category-title {
+      font-size: 1.6rem;
+      color: var(--text-main);
+    }
+
+    .category-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .items-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color-muted);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+      position: relative;
+    }
+
+    .item-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-color);
+      background: var(--bg-card-hover);
+    }
+
+    .item-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .item-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Veg / Non-veg icons */
+    .diet-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .diet-icon.veg {
+      border: 1.5px solid var(--veg-color);
+    }
+
+    .diet-icon.veg::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--veg-color);
+    }
+
+    .diet-icon.non-veg {
+      border: 1.5px solid var(--nonveg-color);
+    }
+
+    .diet-icon.non-veg::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 6px solid var(--nonveg-color);
+    }
+
+    .item-name {
+      font-size: 1.08rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .item-price {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-accent);
+      white-space: nowrap;
+      font-family: var(--heading-font);
+    }
+
+    .item-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.45;
+    }
+
+    .item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+    }
+
+    .item-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      border: 1px solid var(--badge-border);
+    }
+
+    .add-btn {
+      border: 1px solid var(--border-color);
+      background: var(--bg-pill);
+      color: var(--text-main);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .add-btn:hover {
+      background: var(--bg-pill-active);
+      color: var(--text-pill-active);
+      border-color: transparent;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* ==========================================
+       BOTTOM ORDER SUMMARY DRAWER / BAR
+       ========================================== */
+    .order-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      width: calc(100% - 40px);
+      max-width: 600px;
+      background: var(--bg-pill-active);
+      color: var(--text-pill-active);
+      padding: 14px 22px;
+      border-radius: var(--radius-full);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1000;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .order-bar.visible {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .order-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .order-count {
+      font-size: 0.82rem;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    .order-total {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .view-order-btn {
+      border: none;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    /* Modal dialog */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 480px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border-color-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 20px 22px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color-muted);
+    }
+
+    .modal-footer {
+      padding: 16px 22px;
+      border-top: 1px solid var(--border-color-muted);
+      display: flex;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR: THEME SELECTOR & LIVE SEARCH -->
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="theme-toggle-group" id="themeToggleGroup">
+        <button class="theme-btn active" data-theme-target="dark" title="Dark Luxury Theme">
+          <span>🌙</span> Dark Luxury
+        </button>
+        <button class="theme-btn" data-theme-target="rustic" title="Rustic Wooden Theme">
+          <span>🪵</span> Rustic Wooden
+        </button>
+        <button class="theme-btn" data-theme-target="minimal" title="Minimal White Theme">
+          <span>✨</span> Minimal White
+        </button>
+      </div>
+
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="searchInput" placeholder="Search menu items or ingredients...">
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO BANNER SECTION -->
+  <header class="hero-header" id="heroHeader" style="background-image: url('restaurant/cover.jpg');">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <img src="restaurant/logo.png" alt="Restaurant Logo" class="restaurant-logo" id="restLogo">
+      <h1 class="restaurant-name" id="restName">Cafe Aroma</h1>
+      <p class="restaurant-tagline" id="restTagline">Crafted Flavors • Fine Dining • Specialty Brews</p>
+      
+      <div class="meta-badges">
+        <span class="meta-item" id="restRating">⭐ 4.9 (1,250+ reviews)</span>
+        <span class="meta-item" id="restTiming">🕒 8:00 AM - 11:00 PM</span>
+        <span class="meta-item" id="restAddress">📍 Culinary District</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- DIETARY FILTERS -->
+  <div class="filter-wrapper">
+    <div class="scroll-pills" id="dietFilters">
+      <button class="diet-pill active" data-diet="all">All Items</button>
+      <button class="diet-pill" data-diet="veg">🥦 Vegetarian</button>
+      <button class="diet-pill" data-diet="non-veg">🍗 Non-Veg</button>
+      <button class="diet-pill" data-diet="vegan">🌱 Vegan</button>
+      <button class="diet-pill" data-diet="gf">🌾 Gluten-Free</button>
+      <button class="diet-pill" data-diet="chef">⭐ Chef's Special</button>
+    </div>
+  </div>
+
+  <!-- CATEGORY QUICK NAV -->
+  <nav class="category-nav">
+    <div class="category-nav-inner" id="categoryNav">
+      <!-- Dynamic category tabs rendered here -->
+    </div>
+  </nav>
+
+  <!-- MAIN MENU ITEMS CONTAINER -->
+  <main class="menu-container" id="menuContainer">
+    <!-- Dynamic categories & cards rendered here -->
+  </main>
+
+  <!-- FLOATING ORDER SUMMARY BAR -->
+  <div class="order-bar" id="orderBar">
+    <div class="order-info">
+      <span class="order-count" id="orderCountText">0 items selected</span>
+      <span class="order-total" id="orderTotalText">Total: ₹ 0</span>
+    </div>
+    <button class="view-order-btn" id="openOrderModalBtn">View Order</button>
+  </div>
+
+  <!-- ORDER MODAL -->
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Your Selected Items</h3>
+        <button id="closeModalBtn" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Order items listed here -->
+      </div>
+      <div class="modal-footer">
+        <button id="clearOrderBtn" class="add-btn" style="flex:1;">Clear Selection</button>
+        <button id="checkoutBtn" class="theme-btn active" style="flex:2; justify-content:center;">Place Mock Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    let menuData = null;
+    let selectedTheme = 'dark';
+    let currentDietFilter = 'all';
+    let searchQuery = '';
+    const cart = {}; // id -> count
+
+    // DOM Elements
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    const menuContainer = document.getElementById('menuContainer');
+    const categoryNav = document.getElementById('categoryNav');
+    const searchInput = document.getElementById('searchInput');
+    const dietFilters = document.getElementById('dietFilters');
+    const orderBar = document.getElementById('orderBar');
+    const orderCountText = document.getElementById('orderCountText');
+    const orderTotalText = document.getElementById('orderTotalText');
+    const orderModal = document.getElementById('orderModal');
+    const modalBody = document.getElementById('modalBody');
+
+    // Fetch and Initialize Menu
+    async function initApp() {
+      try {
+        const response = await fetch('menu.json');
+        menuData = await response.json();
+        
+        // Load initial theme from menu.json if available
+        if (menuData.theme && ['dark', 'rustic', 'minimal'].includes(menuData.theme.toLowerCase())) {
+          setTheme(menuData.theme.toLowerCase());
+        } else {
+          setTheme('dark');
+        }
+
+        // Render header info
+        if (menuData.restaurant) document.getElementById('restName').textContent = menuData.restaurant;
+        if (menuData.tagline) document.getElementById('restTagline').textContent = menuData.tagline;
+        if (menuData.rating) document.getElementById('restRating').textContent = `⭐ ${menuData.rating}`;
+        if (menuData.timing) document.getElementById('restTiming').textContent = `🕒 ${menuData.timing}`;
+        if (menuData.address) document.getElementById('restAddress').textContent = `📍 ${menuData.address}`;
+
+        renderCategoryTabs();
+        renderMenu();
+
+      } catch (err) {
+        console.error('Error loading menu.json:', err);
+        menuContainer.innerHTML = `<div class="no-results">Failed to load menu data. Please check menu.json file.</div>`;
+      }
+    }
+
+    // Theme Switcher Logic
+    function setTheme(themeName) {
+      selectedTheme = themeName;
+      document.documentElement.setAttribute('data-theme', themeName);
+
+      themeButtons.forEach(btn => {
+        if (btn.getAttribute('data-theme-target') === themeName) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTheme = btn.getAttribute('data-theme-target');
+        setTheme(targetTheme);
+      });
+    });
+
+    // Render Category Tabs
+    function renderCategoryTabs() {
+      if (!menuData || !menuData.categories) return;
+      categoryNav.innerHTML = menuData.categories.map((cat, idx) => `
+        <button class="cat-tab ${idx === 0 ? 'active' : ''}" data-cat-id="category-${idx}">
+          ${cat.icon ? cat.icon + ' ' : ''}${cat.name}
+        </button>
+      `).join('');
+
+      categoryNav.querySelectorAll('.cat-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          categoryNav.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const targetId = tab.getAttribute('data-cat-id');
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+    }
+
+    // Render Menu Items
+    function renderMenu() {
+      if (!menuData || !menuData.categories) return;
+
+      const currency = menuData.currency || '₹';
+      let totalMatches = 0;
+      let html = '';
+
+      menuData.categories.forEach((cat, idx) => {
+        const filteredItems = cat.items.filter(item => {
+          // Dietary Filter
+          if (currentDietFilter === 'veg' && (!item.tags || !item.tags.includes('veg'))) return false;
+          if (currentDietFilter === 'non-veg' && (!item.tags || !item.tags.includes('non-veg'))) return false;
+          if (currentDietFilter === 'vegan' && (!item.tags || !item.tags.includes('vegan'))) return false;
+          if (currentDietFilter === 'gf' && (!item.tags || !item.tags.includes('gf'))) return false;
+          if (currentDietFilter === 'chef' && (!item.badge || !item.badge.toLowerCase().includes('chef'))) return false;
+
+          // Search Filter
+          if (searchQuery.trim() !== '') {
+            const q = searchQuery.toLowerCase();
+            const nameMatch = item.name.toLowerCase().includes(q);
+            const descMatch = item.description && item.description.toLowerCase().includes(q);
+            if (!nameMatch && !descMatch) return false;
+          }
+
+          return true;
+        });
+
+        if (filteredItems.length > 0) {
+          totalMatches += filteredItems.length;
+
+          html += `
+            <section class="category-section" id="category-${idx}">
+              <div class="category-header">
+                <span class="category-icon">${cat.icon || '🍽️'}</span>
+                <h2 class="category-title">${cat.name}</h2>
+              </div>
+              ${cat.description ? `<p class="category-desc">${cat.description}</p>` : ''}
+              
+              <div class="items-grid">
+                ${filteredItems.map(item => {
+                  const isVeg = item.tags && item.tags.includes('veg');
+                  const isNonVeg = item.tags && item.tags.includes('non-veg');
+                  const countInCart = cart[item.id] || 0;
+
+                  return `
+                    <div class="item-card" id="item-${item.id}">
+                      <div class="item-top">
+                        <div class="item-title-wrap">
+                          ${isVeg ? '<span class="diet-icon veg" title="Vegetarian"></span>' : ''}
+                          ${isNonVeg ? '<span class="diet-icon non-veg" title="Non-Vegetarian"></span>' : ''}
+                          <h3 class="item-name">${item.name}</h3>
+                        </div>
+                        <span class="item-price">${currency} ${item.price}</span>
+                      </div>
+                      
+                      ${item.description ? `<p class="item-desc">${item.description}</p>` : ''}
+                      
+                      <div class="item-bottom">
+                        ${item.badge ? `<span class="item-badge">${item.badge}</span>` : '<span></span>'}
+                        <button class="add-btn" onclick="addToCart('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price})">
+                          ${countInCart > 0 ? `✓ Added (${countInCart})` : '+ Add'}
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </section>
+          `;
+        }
+      });
+
+      if (totalMatches === 0) {
+        menuContainer.innerHTML = `<div class="no-results">🔍 No menu items match your search criteria.</div>`;
+      } else {
+        menuContainer.innerHTML = html;
+      }
+    }
+
+    // Add / Manage Cart Items
+    function addToCart(id, name, price) {
+      cart[id] = (cart[id] || 0) + 1;
+      updateOrderBar();
+      renderMenu();
+    }
+
+    function updateOrderBar() {
+      let totalCount = 0;
+      let totalPrice = 0;
+      const currency = (menuData && menuData.currency) ? menuData.currency : '₹';
+
+      if (menuData && menuData.categories) {
+        menuData.categories.forEach(cat => {
+          cat.items.forEach(item => {
+            if (cart[item.id]) {
+              totalCount += cart[item.id];
+              totalPrice += item.price * cart[item.id];
+            }
+          });
+        });
+      }
+
+      orderCountText.textContent = `${totalCount} item${totalCount === 1 ? '' : 's'} selected`;
+      orderTotalText.textContent = `Total: ${currency} ${totalPrice}`;
+
+      if (totalCount > 0) {
+        orderBar.classList.add('visible');
+      } else {
+        orderBar.classList.remove('visible');
+      }
+    }
+
+    // Modal Controls
+    document.getElementById('openOrderModalBtn').addEventListener('click', () => {
+      renderModalContent();
+      orderModal.classList.add('open');
+    });
+
+    document.getElementById('closeModalBtn').addEventListener('click', () => {
+      orderModal.classList.remove('open');
+    });
+
+    document.getElementById('clearOrderBtn').addEventListener('click', () => {
+      for (let key in cart) delete cart[key];
+      updateOrderBar();
+      renderMenu();
+      orderModal.classList.remove('open');
+    });
+
+    document.getElementById('checkoutBtn').addEventListener('click', () => {
+      alert('Thank you! Your order request has been submitted to the staff.');
+      for (let key in cart) delete cart[key];
+      updateOrderBar();
+      renderMenu();
+      orderModal.classList.remove('open');
+    });
+
+    function renderModalContent() {
+      const currency = (menuData && menuData.currency) ? menuData.currency : '₹';
+      let html = '';
+      let total = 0;
+
+      if (menuData && menuData.categories) {
+        menuData.categories.forEach(cat => {
+          cat.items.forEach(item => {
+            if (cart[item.id]) {
+              const itemTotal = item.price * cart[item.id];
+              total += itemTotal;
+              html += `
+                <div class="modal-item-row">
+                  <div>
+                    <strong>${item.name}</strong> × ${cart[item.id]}
+                  </div>
+                  <div>${currency} ${itemTotal}</div>
+                </div>
+              `;
+            }
+          });
+        });
+      }
+
+      if (html === '') {
+        modalBody.innerHTML = '<p style="color:var(--text-muted); text-align:center;">No items selected.</p>';
+      } else {
+        html += `
+          <div style="margin-top:16px; font-weight:700; text-align:right; font-size:1.1rem; color:var(--text-accent);">
+            Total: ${currency} ${total}
+          </div>
+        `;
+        modalBody.innerHTML = html;
+      }
+    }
+
+    // Event Listeners for Search and Diet Filters
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderMenu();
+    });
+
+    dietFilters.querySelectorAll('.diet-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        dietFilters.querySelectorAll('.diet-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentDietFilter = btn.getAttribute('data-diet');
+        renderMenu();
+      });
+    });
+
+    // Initialize Application
+    initApp();
+  </script>
+</body>
+</html>

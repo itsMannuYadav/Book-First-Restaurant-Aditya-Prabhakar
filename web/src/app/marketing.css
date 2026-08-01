@@ -1,0 +1,70 @@
+:root {
+  --bf-ink: #14110e;
+  --bf-ink-soft: #3a342c;
+  --bf-muted: #7a7164;
+  --bf-paper: #f6f1e8;
+  --bf-paper-deep: #ebe3d4;
+  --bf-gold: #c4a35a;
+  --bf-gold-bright: #e6c875;
+  --bf-line: rgba(20, 17, 14, 0.1);
+  --bf-shadow: 0 24px 60px rgba(20, 17, 14, 0.12);
+}
+
+@keyframes bf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bf-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bf-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.bf-fade-up {
+  animation: bf-fade-up 0.7s ease-out both;
+}
+
+.bf-fade-up-delay-1 {
+  animation: bf-fade-up 0.7s ease-out 0.12s both;
+}
+
+.bf-fade-up-delay-2 {
+  animation: bf-fade-up 0.7s ease-out 0.24s both;
+}
+
+.bf-fade-up-delay-3 {
+  animation: bf-fade-up 0.7s ease-out 0.36s both;
+}
+
+.bf-float {
+  animation: bf-float 5.5s ease-in-out infinite;
+}
+
+.bf-gold-text {
+  background: linear-gradient(135deg, #fff5c0 0%, #d4af37 45%, #aa771c 100%);
+  background-size: 180% 180%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: bf-shimmer 6s ease infinite alternate;
+}

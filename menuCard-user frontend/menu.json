@@ -1,0 +1,152 @@
+{
+  "restaurant": "Cafe Aroma & Artisan Bistro",
+  "tagline": "Crafted Flavors • Fine Dining • Specialty Brews",
+  "theme": "dark",
+  "currency": "₹",
+  "rating": "4.9 ★ (1,250+ reviews)",
+  "address": "45 Boulevard Heights, Culinary District",
+  "timing": "8:00 AM - 11:00 PM",
+  "categories": [
+    {
+      "name": "Specialty Coffee & Teas",
+      "icon": "☕",
+      "description": "Single-origin beans ethically sourced and freshly roasted in-house.",
+      "items": [
+        {
+          "id": "c1",
+          "name": "Cappuccino",
+          "price": 180,
+          "description": "Double espresso shot topped with velvety steamed milk foam and cocoa dusting.",
+          "tags": ["veg"],
+          "badge": "Classic"
+        },
+        {
+          "id": "c2",
+          "name": "Gold Leaf Caramel Latte",
+          "price": 240,
+          "description": "Signature dark roast, house-made salted caramel, finished with edible 24k gold leaf.",
+          "tags": ["veg"],
+          "badge": "Chef's Special"
+        },
+        {
+          "id": "c3",
+          "name": "Smoked Vanilla Cold Brew",
+          "price": 210,
+          "description": "18-hour cold steeped Arabica infused with Madagascar vanilla bean and gentle oak smoke.",
+          "tags": ["veg", "vegan"],
+          "badge": "Popular"
+        },
+        {
+          "id": "c4",
+          "name": "Matcha Ceremonial Cloud",
+          "price": 230,
+          "description": "Uji grade ceremonial matcha whisked with oat milk and sweet vanilla cream foam.",
+          "tags": ["veg"]
+        }
+      ]
+    },
+    {
+      "name": "Starters & Small Plates",
+      "icon": "🥗",
+      "description": "Delectable bites designed to spark your appetite.",
+      "items": [
+        {
+          "id": "s1",
+          "name": "Truffle Mushroom Crostini",
+          "price": 320,
+          "description": "Artisan sourdough topped with wild mushroom ragout, white truffle oil, and shaved parmesan.",
+          "tags": ["veg"],
+          "badge": "Popular"
+        },
+        {
+          "id": "s2",
+          "name": "Burrata & Heritage Tomato Salad",
+          "price": 380,
+          "description": "Creamy Italian burrata, heirloom tomatoes, aged balsamic reduction, and pesto oil.",
+          "tags": ["veg", "gf"]
+        },
+        {
+          "id": "s3",
+          "name": "Crispy Calamari Fritti",
+          "price": 420,
+          "description": "Lightly battered squid tossed with sea salt, cracked black pepper, served with garlic aioli.",
+          "tags": ["non-veg"]
+        },
+        {
+          "id": "s4",
+          "name": "Avocado & Edamame Tartare",
+          "price": 340,
+          "description": "Haas avocado, yuzu edamame mash, sesame crisp, and citrus vinaigrette.",
+          "tags": ["veg", "vegan", "gf"],
+          "badge": "Healthy"
+        }
+      ]
+    },
+    {
+      "name": "Signature Mains",
+      "icon": "🍽️",
+      "description": "Masterfully prepared courses celebrating prime ingredients.",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Pan-Seared Salmon Fillet",
+          "price": 680,
+          "description": "Crispy skin Atlantic salmon over saffron risotto, asparagus spears, and lemon butter sauce.",
+          "tags": ["non-veg", "gf"],
+          "badge": "Chef's Special"
+        },
+        {
+          "id": "m2",
+          "name": "Wild Mushroom & Truffle Risotto",
+          "price": 540,
+          "description": "Arborio rice cooked slow with porcini broth, mascarpone, winter truffle, and crispy sage.",
+          "tags": ["veg", "gf"]
+        },
+        {
+          "id": "m3",
+          "name": "Herb-Crusted Rack of Lamb",
+          "price": 850,
+          "description": "NZ tender lamb with rosemary jus, pomme purée, and roasted baby carrots.",
+          "tags": ["non-veg"],
+          "badge": "Signature"
+        },
+        {
+          "id": "m4",
+          "name": "Artisan Wood-Fired Margherita",
+          "price": 460,
+          "description": "San Marzano tomato base, fresh fior di latte mozzarella, basil leaves, extra virgin olive oil.",
+          "tags": ["veg"]
+        }
+      ]
+    },
+    {
+      "name": "Decadent Desserts",
+      "icon": "🍰",
+      "description": "Sweet creations crafted daily by our master pastry chef.",
+      "items": [
+        {
+          "id": "d1",
+          "name": "Valrhona Dark Chocolate Fondant",
+          "price": 310,
+          "description": "Warm molten center 70% dark chocolate cake served with Madagascar vanilla gelato.",
+          "tags": ["veg"],
+          "badge": "Must Try"
+        },
+        {
+          "id": "d2",
+          "name": "Classic Sicilian Tiramisu",
+          "price": 280,
+          "description": "Layers of espresso-soaked ladyfingers, mascarpone sabayon, and cocoa powder.",
+          "tags": ["veg"]
+        },
+        {
+          "id": "d3",
+          "name": "Pistachio & Raspberry Tart",
+          "price": 290,
+          "description": "Crispy shortcrust filled with pistachio frangipane and fresh raspberry coulis.",
+          "tags": ["veg"]
+        }
+      ]
+    }
+  ]
+}
