@@ -11,6 +11,7 @@ const THEMES: Array<{
   { id: "dark", label: "Dark Luxury" },
   { id: "rustic", label: "Rustic" },
   { id: "minimal", label: "Minimal" },
+  { id: "savan", label: "Savan" },
 ];
 
 const PREVIEW_ITEMS = [
@@ -65,6 +66,17 @@ const THEME_STYLES: Record<
     pillIdle: "bg-[#f1f5f9] text-[#64748b]",
     logo: "border-[#0f172a]/20 bg-white text-[#0f172a]",
     nameClass: "text-[#0f172a]",
+  },
+  savan: {
+    shell: "bg-[#061e12]",
+    border: "border-[#1e5336]",
+    muted: "text-[#86efac]/70",
+    text: "text-[#f0fdf4]",
+    accent: "text-[#4ade80]",
+    card: "border-[#1e5336]/60 bg-[#0b2c1b]/60",
+    pillIdle: "bg-[#1e5336]/40 text-[#86efac]/80",
+    logo: "border-[#4ade80]/40 bg-[#061e12] text-[#4ade80]",
+    nameClass: "text-[#4ade80]",
   },
 };
 

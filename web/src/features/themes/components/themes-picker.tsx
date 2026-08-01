@@ -47,7 +47,7 @@ export function ThemesPicker() {
         description="Choose how your public menu looks to guests."
       />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {MENU_THEMES.map((theme) => (
           <button
             key={theme.id}
@@ -69,6 +69,8 @@ export function ThemesPicker() {
                   "bg-gradient-to-br from-[#7a3e22] to-[#f5ede0]",
                 theme.id === "minimal" &&
                   "bg-gradient-to-br from-[#e2e8f0] to-[#0f172a]",
+                theme.id === "savan" &&
+                  "bg-gradient-to-br from-[#062316] via-[#15803d] to-[#86efac]",
               )}
             />
             <p className="font-semibold text-[#14110e]">{theme.label}</p>
@@ -76,6 +78,7 @@ export function ThemesPicker() {
               {theme.id === "dark" && "Gold accents on deep charcoal."}
               {theme.id === "rustic" && "Warm wood tones and cream surfaces."}
               {theme.id === "minimal" && "Clean white with crisp navy accents."}
+              {theme.id === "savan" && "Lush green tones, rain & leaves."}
             </p>
           </button>
         ))}

@@ -1,4 +1,4 @@
-export type MenuThemeId = "dark" | "rustic" | "minimal";
+export type MenuThemeId = "dark" | "rustic" | "minimal" | "savan";
 
 export type DietTag = "veg" | "non-veg" | "vegan" | "gf";
 

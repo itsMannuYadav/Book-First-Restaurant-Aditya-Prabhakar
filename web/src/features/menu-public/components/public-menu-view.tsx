@@ -8,6 +8,7 @@ import { DietFilterPills } from "@/features/menu-public/components/diet-filter-p
 import { CategoryNav } from "@/features/menu-public/components/category-nav";
 import { CategorySection } from "@/features/menu-public/components/category-section";
 import { SelectionBar } from "@/features/menu-public/components/selection-bar";
+import { SavanOverlay } from "@/features/menu-public/components/savan-overlay";
 
 interface PublicMenuViewProps {
   menu: PublicMenuData;
@@ -38,8 +39,9 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
   return (
     <div
       data-menu-theme={theme}
-      className="menu-shell min-h-screen bg-[var(--menu-page)] pb-36 text-[var(--menu-text)] transition-colors duration-350"
+      className="menu-shell relative min-h-screen bg-[var(--menu-page)] pb-36 text-[var(--menu-text)] transition-colors duration-350 overflow-hidden"
     >
+      {theme === "savan" && <SavanOverlay />}
       <MenuTopBar
         theme={theme}
         onThemeChange={setTheme}
