@@ -7,4 +7,5 @@ export const COLLECTIONS = {
   restaurants: "restaurants",
   categories: "categories",
   menuItems: "menuItems",
+  orders: "orders",
 } as const;

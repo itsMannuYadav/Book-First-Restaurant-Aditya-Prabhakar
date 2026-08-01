@@ -27,6 +27,7 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
     selectionCount,
     selectionTotal,
     addItem,
+    removeItem,
     clearSelection,
     isSelectionOpen,
     setIsSelectionOpen,
@@ -78,6 +79,7 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
       </main>
 
       <SelectionBar
+        restaurant={restaurant}
         count={selectionCount}
         total={selectionTotal}
         currency={restaurant.currency}
@@ -85,6 +87,8 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
         isOpen={isSelectionOpen}
         onOpenChange={setIsSelectionOpen}
         onClear={clearSelection}
+        onIncrement={addItem}
+        onDecrement={removeItem}
       />
     </div>
   );

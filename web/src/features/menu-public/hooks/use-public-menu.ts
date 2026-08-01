@@ -62,6 +62,19 @@ export function usePublicMenu(menu: PublicMenuData) {
     }));
   }, []);
 
+  const removeItem = useCallback((itemId: string) => {
+    setSelection((prev) => {
+      const next = { ...prev };
+      const current = next[itemId] ?? 0;
+      if (current <= 1) {
+        delete next[itemId];
+      } else {
+        next[itemId] = current - 1;
+      }
+      return next;
+    });
+  }, []);
+
   const clearSelection = useCallback(() => {
     setSelection({});
     setIsSelectionOpen(false);
@@ -80,6 +93,7 @@ export function usePublicMenu(menu: PublicMenuData) {
     selectionCount,
     selectionTotal,
     addItem,
+    removeItem,
     clearSelection,
     isSelectionOpen,
     setIsSelectionOpen,

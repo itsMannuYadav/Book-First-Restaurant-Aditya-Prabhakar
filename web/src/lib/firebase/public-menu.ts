@@ -28,6 +28,7 @@ export async function getPublicMenuBySlug(
 
   return {
     restaurant: {
+      id: restaurant.id,
       name: restaurant.name,
       slug: restaurant.slug,
       tagline: restaurant.tagline || undefined,
@@ -35,8 +36,16 @@ export async function getPublicMenuBySlug(
       coverUrl: restaurant.coverUrl || undefined,
       address: restaurant.address || undefined,
       timing: restaurant.timing || undefined,
+      phone: restaurant.phone || undefined,
       currency: restaurant.currency,
       theme: restaurant.theme,
+      status: restaurant.status,
+      orderingEnabled: restaurant.orderingEnabled,
+      location: restaurant.location,
+      orderGeoRadiusMeters: restaurant.orderGeoRadiusMeters,
+      tables: restaurant.tables
+        .filter((t) => t.isActive)
+        .map((t) => ({ id: t.id, label: t.label })),
     },
     categories: visibleCategories.map((category) => ({
       id: category.id,

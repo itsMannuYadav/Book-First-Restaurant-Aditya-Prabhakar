@@ -14,7 +14,13 @@ import { COLLECTIONS } from "@/lib/firebase/collections";
 import { nowIso, slugify, uniqueSlug } from "@/lib/utils/string";
 import { formatHours, DEFAULT_HOURS } from "@/lib/utils/hours";
 import { seedStarterMenu } from "@/lib/firebase/seed-menu";
-import type { Restaurant, RestaurantStatus } from "@/types";
+import { DEFAULT_ORDER_GEO_RADIUS_METERS } from "@/constants/orders";
+import type {
+  Restaurant,
+  RestaurantLocation,
+  RestaurantStatus,
+  RestaurantTable,
+} from "@/types";
 import type { MenuThemeId } from "@/types";
 import type { RestaurantInput } from "@/lib/validators/forms";
 
@@ -22,6 +28,33 @@ type CreateRestaurantInput = {
   ownerId: string;
   name: string;
 };
+
+function mapTables(raw: unknown): RestaurantTable[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const row = entry as Record<string, unknown>;
+      const id = String(row.id ?? "");
+      const label = String(row.label ?? "").trim();
+      if (!id || !label) return null;
+      return {
+        id,
+        label,
+        isActive: row.isActive !== false,
+      };
+    })
+    .filter((t): t is RestaurantTable => t !== null);
+}
+
+function mapLocation(raw: unknown): RestaurantLocation | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const row = raw as Record<string, unknown>;
+  const lat = Number(row.lat);
+  const lng = Number(row.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
+  return { lat, lng };
+}
 
 function mapRestaurant(id: string, data: Record<string, unknown>): Restaurant {
   return {
@@ -39,6 +72,13 @@ function mapRestaurant(id: string, data: Record<string, unknown>): Restaurant {
     currency: String(data.currency ?? "₹"),
     theme: (data.theme as MenuThemeId) ?? "dark",
     status: (data.status as RestaurantStatus) ?? "draft",
+    location: mapLocation(data.location),
+    orderGeoRadiusMeters:
+      typeof data.orderGeoRadiusMeters === "number"
+        ? data.orderGeoRadiusMeters
+        : DEFAULT_ORDER_GEO_RADIUS_METERS,
+    orderingEnabled: Boolean(data.orderingEnabled),
+    tables: mapTables(data.tables),
     createdAt: String(data.createdAt ?? ""),
     updatedAt: String(data.updatedAt ?? ""),
   };
@@ -98,12 +138,16 @@ export async function createRestaurant(
     currency: "₹",
     theme: "rustic" as MenuThemeId,
     status: "draft" as RestaurantStatus,
+    location: null,
+    orderGeoRadiusMeters: DEFAULT_ORDER_GEO_RADIUS_METERS,
+    orderingEnabled: false,
+    tables: [] as RestaurantTable[],
     createdAt: timestamp,
     updatedAt: timestamp,
   };
 
   await setDoc(ref, payload);
-  const restaurant = mapRestaurant(ref.id, payload);
+  const restaurant = mapRestaurant(ref.id, payload as unknown as Record<string, unknown>);
 
   try {
     await seedStarterMenu(restaurant.id);
@@ -214,6 +258,11 @@ export async function updateRestaurant(
     }
   }
 
+  const hasLocation = Boolean(input.location);
+  const hasActiveTables = input.tables.some((t) => t.isActive);
+  const orderingEnabled =
+    Boolean(input.orderingEnabled) && hasLocation && hasActiveTables;
+
   await updateDoc(doc(db, COLLECTIONS.restaurants, id), {
     name: input.name.trim(),
     slug,
@@ -225,6 +274,10 @@ export async function updateRestaurant(
     currency: input.currency.trim() || "₹",
     theme: input.theme,
     status: input.status,
+    location: input.location ?? null,
+    orderGeoRadiusMeters: input.orderGeoRadiusMeters,
+    orderingEnabled,
+    tables: input.tables,
     updatedAt: nowIso(),
   });
 }

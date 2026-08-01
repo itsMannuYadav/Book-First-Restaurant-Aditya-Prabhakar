@@ -2,6 +2,17 @@ import type { MenuThemeId } from "./menu";
 
 export type RestaurantStatus = "draft" | "published" | "archived";
 
+export interface RestaurantLocation {
+  lat: number;
+  lng: number;
+}
+
+export interface RestaurantTable {
+  id: string;
+  label: string;
+  isActive: boolean;
+}
+
 export interface Restaurant {
   id: string;
   ownerId: string;
@@ -17,6 +28,14 @@ export interface Restaurant {
   currency: string;
   theme: MenuThemeId;
   status: RestaurantStatus;
+  /** Venue pin — required before dine-in ordering can be enabled. */
+  location?: RestaurantLocation;
+  /** Allowed distance from venue pin (meters). Default 120. */
+  orderGeoRadiusMeters: number;
+  /** Master switch for guest Place order. */
+  orderingEnabled: boolean;
+  /** Owner-defined seats/tables guests must pick from. */
+  tables: RestaurantTable[];
   createdAt: string;
   updatedAt: string;
 }

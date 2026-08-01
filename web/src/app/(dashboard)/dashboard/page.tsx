@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  ClipboardList,
   Layers3,
   QrCode,
   Store,
@@ -16,8 +17,14 @@ import { cn } from "@/lib/utils";
 
 const actions = [
   {
+    title: "Orders",
+    body: "Confirm, decline, and complete dine-in tickets.",
+    href: ROUTES.orders,
+    icon: ClipboardList,
+  },
+  {
     title: "Restaurant",
-    body: "Name, hours, address, and visibility.",
+    body: "Name, hours, address, pin, and tables.",
     href: ROUTES.restaurant,
     icon: Store,
   },

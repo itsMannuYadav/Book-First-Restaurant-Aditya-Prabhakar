@@ -31,7 +31,14 @@ export interface MenuCategory {
   items: MenuItem[];
 }
 
+export interface PublicMenuTable {
+  id: string;
+  label: string;
+}
+
 export interface RestaurantPublicProfile {
+  /** Firestore restaurant id — needed for placing dine-in orders. */
+  id?: string;
   name: string;
   slug: string;
   tagline?: string;
@@ -43,6 +50,11 @@ export interface RestaurantPublicProfile {
   phone?: string;
   currency: string;
   theme: MenuThemeId;
+  status?: "draft" | "published" | "archived";
+  orderingEnabled?: boolean;
+  location?: { lat: number; lng: number };
+  orderGeoRadiusMeters?: number;
+  tables?: PublicMenuTable[];
 }
 
 /** Shape consumed by the public menu experience */

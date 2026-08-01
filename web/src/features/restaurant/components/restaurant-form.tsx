@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { MapPin, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { HoursPicker } from "@/components/shared/hours-picker";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,12 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
 import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
 import { restaurantSchema } from "@/lib/validators/forms";
+import type { RestaurantInput } from "@/lib/validators/forms";
 import { slugify } from "@/lib/utils/string";
 import { formatHours, DEFAULT_HOURS } from "@/lib/utils/hours";
 import { cn } from "@/lib/utils";
 import { MENU_THEMES } from "@/constants/menu-themes";
-import type { MenuThemeId } from "@/types";
-import type { RestaurantStatus } from "@/types";
+import { DEFAULT_ORDER_GEO_RADIUS_METERS } from "@/constants/orders";
+import type { MenuThemeId, Restaurant } from "@/types";
+import type { RestaurantStatus, RestaurantTable } from "@/types";
 
 type FormState = {
   name: string;
@@ -30,6 +33,11 @@ type FormState = {
   currency: string;
   theme: MenuThemeId;
   status: RestaurantStatus;
+  lat: string;
+  lng: string;
+  orderGeoRadiusMeters: string;
+  orderingEnabled: boolean;
+  tables: RestaurantTable[];
 };
 
 type FieldErrors = Partial<Record<keyof FormState, string>>;
@@ -38,43 +46,41 @@ function FieldHint({ children }: { children: React.ReactNode }) {
   return <p className="text-xs leading-relaxed text-[#8a8173]">{children}</p>;
 }
 
+function newTableId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `tbl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function restaurantToForm(restaurant: Restaurant): FormState {
+  return {
+    name: restaurant.name,
+    slug: slugify(restaurant.slug) || restaurant.slug.toLowerCase(),
+    tagline:
+      restaurant.tagline ||
+      "Fresh flavors · Warm hospitality · Made with care",
+    description:
+      restaurant.description ||
+      "Welcome to our kitchen. Update this text with your story, specialties, and what guests should try first.",
+    address: restaurant.address || "Add your street address here",
+    phone: restaurant.phone || "+91 98765 43210",
+    timing: restaurant.timing || formatHours(DEFAULT_HOURS),
+    currency: restaurant.currency || "₹",
+    theme: restaurant.theme,
+    status: restaurant.status,
+    lat: restaurant.location ? String(restaurant.location.lat) : "",
+    lng: restaurant.location ? String(restaurant.location.lng) : "",
+    orderGeoRadiusMeters: String(
+      restaurant.orderGeoRadiusMeters || DEFAULT_ORDER_GEO_RADIUS_METERS,
+    ),
+    orderingEnabled: restaurant.orderingEnabled,
+    tables: restaurant.tables ?? [],
+  };
+}
+
 export function RestaurantForm() {
   const { restaurant, loading, error, save } = useOwnerRestaurant();
-  const [pending, setPending] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [form, setForm] = useState<FormState>({
-    name: "",
-    slug: "",
-    tagline: "Fresh flavors · Warm hospitality · Made with care",
-    description:
-      "Welcome to our kitchen. Update this text with your story, specialties, and what guests should try first.",
-    address: "Add your street address here",
-    phone: "+91 98765 43210",
-    timing: formatHours(DEFAULT_HOURS),
-    currency: "₹",
-    theme: "rustic",
-    status: "draft",
-  });
-
-  useEffect(() => {
-    if (!restaurant) return;
-    setForm({
-      name: restaurant.name,
-      slug: slugify(restaurant.slug) || restaurant.slug.toLowerCase(),
-      tagline:
-        restaurant.tagline ||
-        "Fresh flavors · Warm hospitality · Made with care",
-      description:
-        restaurant.description ||
-        "Welcome to our kitchen. Update this text with your story, specialties, and what guests should try first.",
-      address: restaurant.address || "Add your street address here",
-      phone: restaurant.phone || "+91 98765 43210",
-      timing: restaurant.timing || formatHours(DEFAULT_HOURS),
-      currency: restaurant.currency || "₹",
-      theme: restaurant.theme,
-      status: restaurant.status,
-    });
-  }, [restaurant]);
 
   if (loading) {
     return (
@@ -94,12 +100,112 @@ export function RestaurantForm() {
     );
   }
 
+  if (!restaurant) return null;
+
+  return (
+    <RestaurantFormFields
+      key={`${restaurant.id}:${restaurant.updatedAt}`}
+      save={save}
+      initial={restaurantToForm(restaurant)}
+    />
+  );
+}
+
+function RestaurantFormFields({
+  save,
+  initial,
+}: {
+  save: (input: RestaurantInput) => Promise<void>;
+  initial: FormState;
+}) {
+  const [pending, setPending] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [newTableLabel, setNewTableLabel] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [form, setForm] = useState<FormState>(initial);
+
+  const activeTableCount = useMemo(
+    () => form.tables.filter((t) => t.isActive).length,
+    [form.tables],
+  );
+
+  const canEnableOrdering = Boolean(form.lat && form.lng) && activeTableCount > 0;
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation isn’t supported in this browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm((prev) => ({
+          ...prev,
+          lat: pos.coords.latitude.toFixed(6),
+          lng: pos.coords.longitude.toFixed(6),
+        }));
+        setLocating(false);
+        toast.success("Venue pin set from your current location");
+      },
+      (err) => {
+        setLocating(false);
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission denied. Enter coordinates manually."
+            : "Couldn’t read your location. Enter coordinates manually.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
+  }
+
+  function addTable() {
+    const label = newTableLabel.trim();
+    if (!label) {
+      toast.error("Enter a table or seat label first");
+      return;
+    }
+    if (form.tables.some((t) => t.label.toLowerCase() === label.toLowerCase() && t.isActive)) {
+      toast.error("That table label already exists");
+      return;
+    }
+    setForm((prev) => ({
+      ...prev,
+      tables: [...prev.tables, { id: newTableId(), label, isActive: true }],
+    }));
+    setNewTableLabel("");
+  }
+
+  function deactivateTable(id: string) {
+    setForm((prev) => ({
+      ...prev,
+      tables: prev.tables.map((t) =>
+        t.id === id ? { ...t, isActive: false } : t,
+      ),
+    }));
+  }
+
+  function renameTable(id: string, label: string) {
+    setForm((prev) => ({
+      ...prev,
+      tables: prev.tables.map((t) => (t.id === id ? { ...t, label } : t)),
+    }));
+  }
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setFieldErrors({});
 
+    const latNum = form.lat.trim() ? Number(form.lat) : NaN;
+    const lngNum = form.lng.trim() ? Number(form.lng) : NaN;
+    const hasCoords = form.lat.trim() !== "" && form.lng.trim() !== "";
+
+    const location =
+      hasCoords && Number.isFinite(latNum) && Number.isFinite(lngNum)
+        ? { lat: latNum, lng: lngNum }
+        : null;
+
     const normalized = {
-      ...form,
       name: form.name.trim(),
       slug: slugify(form.slug),
       tagline: form.tagline.trim(),
@@ -108,6 +214,15 @@ export function RestaurantForm() {
       phone: form.phone.trim(),
       timing: form.timing.trim(),
       currency: form.currency.trim() || "₹",
+      theme: form.theme,
+      status: form.status,
+      location,
+      orderGeoRadiusMeters: Number(form.orderGeoRadiusMeters) || DEFAULT_ORDER_GEO_RADIUS_METERS,
+      orderingEnabled: form.orderingEnabled && Boolean(location) && activeTableCount > 0,
+      tables: form.tables.map((t) => ({
+        ...t,
+        label: t.label.trim(),
+      })),
     };
 
     const parsed = restaurantSchema.safeParse(normalized);
@@ -129,8 +244,19 @@ export function RestaurantForm() {
 
     setPending(true);
     try {
-      await save(parsed.data);
-      setForm((prev) => ({ ...prev, ...parsed.data }));
+      await save({
+        ...parsed.data,
+        location: parsed.data.location ?? null,
+      });
+      setForm((prev) => ({
+        ...prev,
+        ...parsed.data,
+        lat: parsed.data.location ? String(parsed.data.location.lat) : "",
+        lng: parsed.data.location ? String(parsed.data.location.lng) : "",
+        orderGeoRadiusMeters: String(parsed.data.orderGeoRadiusMeters),
+        orderingEnabled: parsed.data.orderingEnabled,
+        tables: parsed.data.tables,
+      }));
       toast.success("Restaurant profile saved");
     } catch (err) {
       toast.error(getFirebaseErrorMessage(err));
@@ -325,6 +451,176 @@ export function RestaurantForm() {
             Use Draft while building. Publish when the menu looks ready.
           </FieldHint>
         </div>
+      </div>
+
+      <div className="grid gap-5 rounded-3xl border border-[#14110e]/8 bg-white/80 p-5 shadow-sm sm:p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-[#14110e]">
+            Dine-in ordering
+          </h2>
+          <p className="mt-1 text-sm text-[#7a7164]">
+            Guests can place table tickets only when they are near your venue.
+            Set a pin, add tables, then turn ordering on.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="lat">Latitude</Label>
+            <Input
+              id="lat"
+              inputMode="decimal"
+              placeholder="28.613900"
+              value={form.lat}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, lat: e.target.value }))
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lng">Longitude</Label>
+            <Input
+              id="lng"
+              inputMode="decimal"
+              placeholder="77.209000"
+              value={form.lng}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, lng: e.target.value }))
+              }
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={useMyLocation}
+          disabled={locating}
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "w-full justify-center gap-2 border-[#14110e]/10 sm:w-auto",
+          )}
+        >
+          <MapPin className="size-4" />
+          {locating ? "Reading location…" : "Use my current location"}
+        </button>
+        <FieldHint>
+          Stand inside your restaurant and tap this so the pin matches your
+          venue. Guests farther than the radius below cannot order.
+        </FieldHint>
+
+        <div className="space-y-2 max-w-xs">
+          <Label htmlFor="radius">Order radius (meters)</Label>
+          <Input
+            id="radius"
+            type="number"
+            min={30}
+            max={500}
+            value={form.orderGeoRadiusMeters}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                orderGeoRadiusMeters: e.target.value,
+              }))
+            }
+          />
+          <FieldHint>Default 120m. Increase slightly for large venues.</FieldHint>
+        </div>
+
+        <div className="space-y-3 border-t border-[#14110e]/8 pt-4">
+          <Label>Tables & seats</Label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. Table 7 or Patio A"
+              value={newTableLabel}
+              onChange={(e) => setNewTableLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addTable();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={addTable}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "shrink-0 gap-1 border-[#14110e]/10",
+              )}
+            >
+              <Plus className="size-4" />
+              Add
+            </button>
+          </div>
+          <FieldHint>
+            Guests must pick from this list. Deactivate instead of deleting so
+            past orders keep their labels.
+          </FieldHint>
+
+          {form.tables.filter((t) => t.isActive).length === 0 ? (
+            <p className="text-sm text-[#8a8173]">No active tables yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {form.tables
+                .filter((t) => t.isActive)
+                .map((table) => (
+                  <li
+                    key={table.id}
+                    className="flex items-center gap-2 rounded-xl border border-[#14110e]/8 bg-[#faf7f1] px-3 py-2"
+                  >
+                    <Input
+                      value={table.label}
+                      onChange={(e) => renameTable(table.id, e.target.value)}
+                      className="h-8 border-0 bg-transparent shadow-none focus-visible:ring-0"
+                    />
+                    <button
+                      type="button"
+                      aria-label={`Deactivate ${table.label}`}
+                      onClick={() => deactivateTable(table.id)}
+                      className={cn(
+                        buttonVariants({ variant: "ghost", size: "icon" }),
+                        "size-8 shrink-0 text-[#8a8173]",
+                      )}
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </div>
+
+        <label
+          className={cn(
+            "flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3",
+            canEnableOrdering
+              ? "border-[#14110e]/10 bg-[#faf7f1]"
+              : "border-dashed border-[#14110e]/15 bg-transparent opacity-80",
+          )}
+        >
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={form.orderingEnabled && canEnableOrdering}
+            disabled={!canEnableOrdering}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                orderingEnabled: e.target.checked,
+              }))
+            }
+          />
+          <span>
+            <span className="block text-sm font-semibold text-[#14110e]">
+              Enable dine-in ordering
+            </span>
+            <span className="mt-0.5 block text-xs text-[#7a7164]">
+              {canEnableOrdering
+                ? "Guests on your published menu can place table tickets when they are nearby."
+                : "Add a venue pin and at least one active table first."}
+            </span>
+          </span>
+        </label>
       </div>
 
       <button

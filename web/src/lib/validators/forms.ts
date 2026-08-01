@@ -32,6 +32,25 @@ export const restaurantSchema = z.object({
   currency: z.string().min(1, "Currency is required (example: ₹)"),
   theme: z.enum(["dark", "rustic", "minimal"]),
   status: z.enum(["draft", "published", "archived"]),
+  location: z
+    .object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    })
+    .optional()
+    .nullable(),
+  orderGeoRadiusMeters: z.coerce
+    .number()
+    .min(30, "Radius must be at least 30m")
+    .max(500, "Radius must be 500m or less"),
+  orderingEnabled: z.boolean(),
+  tables: z.array(
+    z.object({
+      id: z.string().min(1),
+      label: z.string().trim().min(1, "Table label is required").max(40),
+      isActive: z.boolean(),
+    }),
+  ),
 });
 
 export const categorySchema = z.object({

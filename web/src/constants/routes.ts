@@ -3,6 +3,7 @@ export const ROUTES = {
   login: "/login",
   signup: "/signup",
   dashboard: "/dashboard",
+  orders: "/orders",
   restaurant: "/restaurant",
   categories: "/categories",
   menuItems: "/menu-items",
@@ -14,6 +15,7 @@ export const ROUTES = {
 
 export const DASHBOARD_NAV = [
   { href: ROUTES.dashboard, label: "Dashboard" },
+  { href: ROUTES.orders, label: "Orders" },
   { href: ROUTES.restaurant, label: "Restaurant" },
   { href: ROUTES.categories, label: "Categories" },
   { href: ROUTES.menuItems, label: "Menu Items" },
