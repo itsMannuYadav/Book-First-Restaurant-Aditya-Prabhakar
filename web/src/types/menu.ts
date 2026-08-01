@@ -52,6 +52,8 @@ export interface RestaurantPublicProfile {
   theme: MenuThemeId;
   status?: "draft" | "published" | "archived";
   orderingEnabled?: boolean;
+  /** Defaults to true when omitted (legacy restaurants). */
+  requireGuestGps?: boolean;
   location?: { lat: number; lng: number };
   orderGeoRadiusMeters?: number;
   tables?: PublicMenuTable[];

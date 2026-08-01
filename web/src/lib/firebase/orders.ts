@@ -43,7 +43,7 @@ function mapOwnerOrder(
     status: data.status as OrderStatus,
     guestNote: data.guestNote ? String(data.guestNote) : undefined,
     ownerNote: data.ownerNote ? String(data.ownerNote) : undefined,
-    guestLocation: data.guestLocation as OrderGuestLocation,
+    guestLocation: (data.guestLocation as OrderGuestLocation) || undefined,
     createdAt: String(data.createdAt ?? ""),
     updatedAt: String(data.updatedAt ?? ""),
     statusHistory: (data.statusHistory as OrderStatusEvent[]) ?? [],

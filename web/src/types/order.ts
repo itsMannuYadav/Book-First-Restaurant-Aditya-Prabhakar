@@ -38,7 +38,8 @@ export interface Order {
   status: OrderStatus;
   guestNote?: string;
   ownerNote?: string;
-  guestLocation: OrderGuestLocation;
+  /** Present when GPS was required/captured at order time. */
+  guestLocation?: OrderGuestLocation;
   /** SHA-256 hex of the guest access token — never expose to clients. */
   accessTokenHash: string;
   clientIdempotencyKey: string;
@@ -75,7 +76,7 @@ export interface OwnerOrderView {
   status: OrderStatus;
   guestNote?: string;
   ownerNote?: string;
-  guestLocation: OrderGuestLocation;
+  guestLocation?: OrderGuestLocation;
   createdAt: string;
   updatedAt: string;
   statusHistory: OrderStatusEvent[];
