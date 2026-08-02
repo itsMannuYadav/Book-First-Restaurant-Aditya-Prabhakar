@@ -77,6 +77,7 @@ function mapRestaurant(id: string, data: Record<string, unknown>): Restaurant {
       typeof data.orderGeoRadiusMeters === "number"
         ? data.orderGeoRadiusMeters
         : DEFAULT_ORDER_GEO_RADIUS_METERS,
+    requireGuestGps: data.requireGuestGps !== false,
     orderingEnabled: Boolean(data.orderingEnabled),
     tables: mapTables(data.tables),
     createdAt: String(data.createdAt ?? ""),
@@ -140,6 +141,7 @@ export async function createRestaurant(
     status: "draft" as RestaurantStatus,
     location: null,
     orderGeoRadiusMeters: DEFAULT_ORDER_GEO_RADIUS_METERS,
+    requireGuestGps: true,
     orderingEnabled: false,
     tables: [] as RestaurantTable[],
     createdAt: timestamp,
@@ -260,8 +262,11 @@ export async function updateRestaurant(
 
   const hasLocation = Boolean(input.location);
   const hasActiveTables = input.tables.some((t) => t.isActive);
+  const requireGuestGps = input.requireGuestGps !== false;
   const orderingEnabled =
-    Boolean(input.orderingEnabled) && hasLocation && hasActiveTables;
+    Boolean(input.orderingEnabled) &&
+    hasActiveTables &&
+    (!requireGuestGps || hasLocation);
 
   await updateDoc(doc(db, COLLECTIONS.restaurants, id), {
     name: input.name.trim(),
@@ -276,6 +281,7 @@ export async function updateRestaurant(
     status: input.status,
     location: input.location ?? null,
     orderGeoRadiusMeters: input.orderGeoRadiusMeters,
+    requireGuestGps,
     orderingEnabled,
     tables: input.tables,
     updatedAt: nowIso(),

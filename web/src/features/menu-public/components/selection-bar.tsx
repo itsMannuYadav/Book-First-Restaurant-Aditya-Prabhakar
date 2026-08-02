@@ -57,15 +57,17 @@ export function SelectionBar({
     accessToken: string;
   } | null>(() => readStoredTicket(restaurant.id));
 
+  const requireGuestGps = restaurant.requireGuestGps !== false;
+
   const orderingReady = useMemo(() => {
     return Boolean(
       restaurant.id &&
         restaurant.status === "published" &&
         restaurant.orderingEnabled &&
-        restaurant.location &&
-        (restaurant.tables?.length ?? 0) > 0,
+        (restaurant.tables?.length ?? 0) > 0 &&
+        (!requireGuestGps || restaurant.location),
     );
-  }, [restaurant]);
+  }, [restaurant, requireGuestGps]);
 
   const tables: PublicMenuTable[] = restaurant.tables ?? [];
 
@@ -89,7 +91,11 @@ export function SelectionBar({
   async function submitOrder() {
     setFormError(null);
 
-    if (!restaurant.id || !orderingReady || !restaurant.location) {
+    if (!restaurant.id || !orderingReady) {
+      setFormError("Ordering isn’t set up yet. Please ask staff for help.");
+      return;
+    }
+    if (requireGuestGps && !restaurant.location) {
       setFormError("Ordering isn’t set up yet. Please ask staff for help.");
       return;
     }
@@ -138,25 +144,41 @@ export function SelectionBar({
 
     setCheckoutStep("submitting");
 
-    const gps = await requestOrderGpsFix();
-    if (!gps.ok) {
-      setFormError(gps.message);
-      setCheckoutStep("checkout");
-      return;
-    }
+    let lat: number | undefined;
+    let lng: number | undefined;
+    let accuracyMeters: number | undefined;
 
-    const distance = haversineDistanceMeters(
-      { lat: gps.lat, lng: gps.lng },
-      restaurant.location,
-    );
-    const radius =
-      restaurant.orderGeoRadiusMeters ?? DEFAULT_ORDER_GEO_RADIUS_METERS;
-    if (distance > radius) {
-      setFormError(
-        `You need to be at the restaurant to order (about ${Math.round(distance)}m away).`,
+    if (requireGuestGps) {
+      const gps = await requestOrderGpsFix();
+      if (!gps.ok) {
+        setFormError(gps.message);
+        setCheckoutStep("checkout");
+        return;
+      }
+
+      if (!restaurant.location) {
+        setFormError("Ordering isn’t set up yet. Please ask staff for help.");
+        setCheckoutStep("checkout");
+        return;
+      }
+
+      const distance = haversineDistanceMeters(
+        { lat: gps.lat, lng: gps.lng },
+        restaurant.location,
       );
-      setCheckoutStep("checkout");
-      return;
+      const radius =
+        restaurant.orderGeoRadiusMeters ?? DEFAULT_ORDER_GEO_RADIUS_METERS;
+      if (distance > radius) {
+        setFormError(
+          `You need to be at the restaurant to order (about ${Math.round(distance)}m away).`,
+        );
+        setCheckoutStep("checkout");
+        return;
+      }
+
+      lat = gps.lat;
+      lng = gps.lng;
+      accuracyMeters = gps.accuracyMeters;
     }
 
     const idempotencyKey = newIdempotencyKey();
@@ -173,9 +195,11 @@ export function SelectionBar({
             quantity: line.quantity,
           })),
           guestNote: guestNote.trim() || undefined,
-          lat: gps.lat,
-          lng: gps.lng,
-          accuracyMeters: gps.accuracyMeters,
+          ...(typeof lat === "number" &&
+          typeof lng === "number" &&
+          typeof accuracyMeters === "number"
+            ? { lat, lng, accuracyMeters }
+            : {}),
           idempotencyKey,
           website: honeypot || undefined,
         }),
@@ -354,8 +378,9 @@ export function SelectionBar({
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-[var(--menu-muted)]">
-                    Dine-in only. We’ll use your location to confirm you’re at
-                    the restaurant — no account needed.
+                    {requireGuestGps
+                      ? "Dine-in only. We’ll use your location to confirm you’re at the restaurant — no account needed."
+                      : "Dine-in ticket — pick your table and send it to the kitchen. No account needed."}
                   </p>
 
                   <div className="space-y-2">
@@ -423,7 +448,9 @@ export function SelectionBar({
 
                   {step === "submitting" ? (
                     <p className="text-center text-sm text-[var(--menu-muted)]">
-                      Checking your location and sending the order…
+                      {requireGuestGps
+                        ? "Checking your location and sending the order…"
+                        : "Sending your order…"}
                     </p>
                   ) : null}
                 </div>

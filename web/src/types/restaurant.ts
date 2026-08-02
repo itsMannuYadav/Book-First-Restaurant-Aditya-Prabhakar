@@ -32,6 +32,11 @@ export interface Restaurant {
   location?: RestaurantLocation;
   /** Allowed distance from venue pin (meters). Default 120. */
   orderGeoRadiusMeters: number;
+  /**
+   * When true (default), guests must be near the venue pin to order.
+   * Owners can disable for indoor GPS issues — increases prank-order risk.
+   */
+  requireGuestGps: boolean;
   /** Master switch for guest Place order. */
   orderingEnabled: boolean;
   /** Owner-defined seats/tables guests must pick from. */

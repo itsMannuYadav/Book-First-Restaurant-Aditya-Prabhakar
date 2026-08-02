@@ -43,6 +43,7 @@ export const restaurantSchema = z.object({
     .number()
     .min(30, "Radius must be at least 30m")
     .max(500, "Radius must be 500m or less"),
+  requireGuestGps: z.boolean(),
   orderingEnabled: z.boolean(),
   tables: z.array(
     z.object({

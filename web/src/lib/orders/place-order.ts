@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash } from "crypto";
 import type { DocumentData } from "firebase-admin/firestore";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
@@ -46,9 +47,9 @@ export const placeOrderBodySchema = z.object({
     .min(1)
     .max(MAX_ORDER_LINE_ITEMS),
   guestNote: z.string().max(MAX_GUEST_NOTE_LENGTH).optional(),
-  lat: z.number(),
-  lng: z.number(),
-  accuracyMeters: z.number().positive(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  accuracyMeters: z.number().positive().optional(),
   idempotencyKey: z.string().min(8).max(128),
   /** Honeypot — bots fill this; humans leave it empty. */
   website: z.string().max(200).optional(),
@@ -128,33 +129,16 @@ export async function placeOrder(
     };
   }
 
-  if (!isValidLatLng(body.lat, body.lng)) {
-    return {
-      ok: false,
-      status: 400,
-      code: "INVALID_LOCATION",
-      message: "Your location looks invalid. Please try again.",
-    };
-  }
-
-  if (body.accuracyMeters > MAX_GPS_ACCURACY_METERS) {
-    return {
-      ok: false,
-      status: 400,
-      code: "GPS_INACCURATE",
-      message:
-        "Your GPS signal isn’t clear enough. Step closer to a window or outdoors and try again.",
-      meta: { accuracyMeters: body.accuracyMeters, max: MAX_GPS_ACCURACY_METERS },
-    };
-  }
-
   pruneRateLimitBuckets();
 
-  const rateKeys = [
-    `ip:${clientIp}`,
-    `geo:${geoBucket(body.lat, body.lng)}`,
-    `restaurant:${body.restaurantId}`,
-  ];
+  const rateKeys = [`ip:${clientIp}`, `restaurant:${body.restaurantId}`];
+  if (
+    typeof body.lat === "number" &&
+    typeof body.lng === "number" &&
+    isValidLatLng(body.lat, body.lng)
+  ) {
+    rateKeys.push(`geo:${geoBucket(body.lat, body.lng)}`);
+  }
 
   for (const key of rateKeys) {
     const limited = checkRateLimit(
@@ -189,6 +173,7 @@ export async function placeOrder(
   const restaurant = restaurantSnap.data()!;
   const status = String(restaurant.status ?? "draft");
   const orderingEnabled = Boolean(restaurant.orderingEnabled);
+  const requireGuestGps = restaurant.requireGuestGps !== false;
   const location = restaurant.location as { lat?: number; lng?: number } | undefined;
   const radius =
     typeof restaurant.orderGeoRadiusMeters === "number"
@@ -215,35 +200,107 @@ export async function placeOrder(
     };
   }
 
-  if (
-    !location ||
-    typeof location.lat !== "number" ||
-    typeof location.lng !== "number" ||
-    !isValidLatLng(location.lat, location.lng)
-  ) {
-    return {
-      ok: false,
-      status: 403,
-      code: "NO_LOCATION",
-      message: "Ordering isn’t set up yet. Please ask staff for help.",
+  let guestLocation: Order["guestLocation"];
+
+  if (requireGuestGps) {
+    if (
+      typeof body.lat !== "number" ||
+      typeof body.lng !== "number" ||
+      typeof body.accuracyMeters !== "number"
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        code: "INVALID_LOCATION",
+        message: "Location is required to place a dine-in order here.",
+      };
+    }
+
+    if (!isValidLatLng(body.lat, body.lng)) {
+      return {
+        ok: false,
+        status: 400,
+        code: "INVALID_LOCATION",
+        message: "Your location looks invalid. Please try again.",
+      };
+    }
+
+    if (body.accuracyMeters > MAX_GPS_ACCURACY_METERS) {
+      return {
+        ok: false,
+        status: 400,
+        code: "GPS_INACCURATE",
+        message:
+          "Your GPS signal isn’t clear enough. Step closer to a window or outdoors and try again.",
+        meta: {
+          accuracyMeters: body.accuracyMeters,
+          max: MAX_GPS_ACCURACY_METERS,
+        },
+      };
+    }
+
+    if (
+      !location ||
+      typeof location.lat !== "number" ||
+      typeof location.lng !== "number" ||
+      !isValidLatLng(location.lat, location.lng)
+    ) {
+      return {
+        ok: false,
+        status: 403,
+        code: "NO_LOCATION",
+        message: "Ordering isn’t set up yet. Please ask staff for help.",
+      };
+    }
+
+    const distanceMeters = haversineDistanceMeters(
+      { lat: body.lat, lng: body.lng },
+      { lat: location.lat, lng: location.lng },
+    );
+
+    if (distanceMeters > radius) {
+      return {
+        ok: false,
+        status: 403,
+        code: "TOO_FAR",
+        message: "You need to be at the restaurant to place a dine-in order.",
+        meta: {
+          distanceMeters: Math.round(distanceMeters),
+          radiusMeters: radius,
+        },
+      };
+    }
+
+    guestLocation = {
+      lat: body.lat,
+      lng: body.lng,
+      accuracyMeters: body.accuracyMeters,
+      distanceMeters: Math.round(distanceMeters),
     };
-  }
-
-  const distanceMeters = haversineDistanceMeters(
-    { lat: body.lat, lng: body.lng },
-    { lat: location.lat, lng: location.lng },
-  );
-
-  if (distanceMeters > radius) {
-    return {
-      ok: false,
-      status: 403,
-      code: "TOO_FAR",
-      message: "You need to be at the restaurant to place a dine-in order.",
-      meta: {
-        distanceMeters: Math.round(distanceMeters),
-        radiusMeters: radius,
-      },
+  } else if (
+    typeof body.lat === "number" &&
+    typeof body.lng === "number" &&
+    typeof body.accuracyMeters === "number" &&
+    isValidLatLng(body.lat, body.lng)
+  ) {
+    // Optional soft capture when GPS is not required.
+    const distanceMeters =
+      location &&
+      typeof location.lat === "number" &&
+      typeof location.lng === "number" &&
+      isValidLatLng(location.lat, location.lng)
+        ? Math.round(
+            haversineDistanceMeters(
+              { lat: body.lat, lng: body.lng },
+              { lat: location.lat, lng: location.lng },
+            ),
+          )
+        : -1;
+    guestLocation = {
+      lat: body.lat,
+      lng: body.lng,
+      accuracyMeters: body.accuracyMeters,
+      distanceMeters,
     };
   }
 
@@ -257,30 +314,29 @@ export async function placeOrder(
     };
   }
 
-  // Idempotency: return existing order if same key was used recently.
-  const idempotentQuery = await db
-    .collection(COLLECTIONS.orders)
-    .where("restaurantId", "==", body.restaurantId)
-    .where("clientIdempotencyKey", "==", body.idempotencyKey)
-    .limit(1)
-    .get();
+  // Idempotency via doc id — no composite index required.
+  const idempotencyId = createHash("sha256")
+    .update(`${body.restaurantId}:${body.idempotencyKey}`)
+    .digest("hex");
+  const idempotencyRef = db
+    .collection(COLLECTIONS.orderIdempotency)
+    .doc(idempotencyId);
+  const idempotencySnap = await idempotencyRef.get();
 
-  if (!idempotentQuery.empty) {
-    const existing = idempotentQuery.docs[0]!;
-    const data = existing.data();
+  if (idempotencySnap.exists) {
+    const data = idempotencySnap.data()!;
     const createdAt = Date.parse(String(data.createdAt ?? ""));
     if (
       Number.isFinite(createdAt) &&
       Date.now() - createdAt < ORDER_IDEMPOTENCY_TTL_MS
     ) {
-      // Cannot return the original token (only hash stored). Tell client to use stored token.
       return {
         ok: false,
         status: 409,
         code: "IDEMPOTENCY_REPLAY",
         message:
           "This order was already submitted. Check your order ticket on this device.",
-        meta: { orderId: existing.id },
+        meta: { orderId: String(data.orderId ?? "") },
       };
     }
   }
@@ -349,7 +405,7 @@ export async function placeOrder(
   const guestNote = body.guestNote?.trim() || undefined;
 
   const orderRef = db.collection(COLLECTIONS.orders).doc();
-  const payload: Omit<Order, "id"> = {
+  const payload: Record<string, unknown> = {
     restaurantId: body.restaurantId,
     shortCode,
     tableId: table.id,
@@ -358,21 +414,24 @@ export async function placeOrder(
     currency,
     total,
     status: "pending",
-    guestNote,
-    guestLocation: {
-      lat: body.lat,
-      lng: body.lng,
-      accuracyMeters: body.accuracyMeters,
-      distanceMeters: Math.round(distanceMeters),
-    },
     accessTokenHash,
     clientIdempotencyKey: body.idempotencyKey,
     createdAt: timestamp,
     updatedAt: timestamp,
     statusHistory: [{ status: "pending", at: timestamp }],
   };
+  // Firestore rejects `undefined` field values.
+  if (guestNote) payload.guestNote = guestNote;
+  if (guestLocation) payload.guestLocation = guestLocation;
 
-  await orderRef.set(payload);
+  const batch = db.batch();
+  batch.set(orderRef, payload);
+  batch.set(idempotencyRef, {
+    orderId: orderRef.id,
+    restaurantId: body.restaurantId,
+    createdAt: timestamp,
+  });
+  await batch.commit();
 
   return {
     ok: true,

@@ -41,6 +41,7 @@ export async function getPublicMenuBySlug(
       theme: restaurant.theme,
       status: restaurant.status,
       orderingEnabled: restaurant.orderingEnabled,
+      requireGuestGps: restaurant.requireGuestGps !== false,
       location: restaurant.location,
       orderGeoRadiusMeters: restaurant.orderGeoRadiusMeters,
       tables: restaurant.tables

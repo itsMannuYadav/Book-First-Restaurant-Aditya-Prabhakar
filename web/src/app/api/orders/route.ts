@@ -78,10 +78,16 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[POST /api/orders]", err);
+    const detail =
+      err instanceof Error
+        ? err.message
+        : typeof err === "string"
+          ? err
+          : "Unknown error";
     return NextResponse.json(
       {
         code: "SERVER_ERROR",
-        message: "Something went wrong placing your order. Please try again.",
+        message: `Order failed: ${detail}`,
       },
       { status: 500 },
     );

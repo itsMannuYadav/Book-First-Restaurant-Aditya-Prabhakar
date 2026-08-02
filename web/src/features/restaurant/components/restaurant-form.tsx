@@ -36,6 +36,7 @@ type FormState = {
   lat: string;
   lng: string;
   orderGeoRadiusMeters: string;
+  requireGuestGps: boolean;
   orderingEnabled: boolean;
   tables: RestaurantTable[];
 };
@@ -74,6 +75,7 @@ function restaurantToForm(restaurant: Restaurant): FormState {
     orderGeoRadiusMeters: String(
       restaurant.orderGeoRadiusMeters || DEFAULT_ORDER_GEO_RADIUS_METERS,
     ),
+    requireGuestGps: restaurant.requireGuestGps !== false,
     orderingEnabled: restaurant.orderingEnabled,
     tables: restaurant.tables ?? [],
   };
@@ -129,7 +131,9 @@ function RestaurantFormFields({
     [form.tables],
   );
 
-  const canEnableOrdering = Boolean(form.lat && form.lng) && activeTableCount > 0;
+  const hasPin = Boolean(form.lat.trim() && form.lng.trim());
+  const canEnableOrdering =
+    activeTableCount > 0 && (!form.requireGuestGps || hasPin);
 
   function useMyLocation() {
     if (!navigator.geolocation) {
@@ -218,7 +222,11 @@ function RestaurantFormFields({
       status: form.status,
       location,
       orderGeoRadiusMeters: Number(form.orderGeoRadiusMeters) || DEFAULT_ORDER_GEO_RADIUS_METERS,
-      orderingEnabled: form.orderingEnabled && Boolean(location) && activeTableCount > 0,
+      requireGuestGps: form.requireGuestGps,
+      orderingEnabled:
+        form.orderingEnabled &&
+        activeTableCount > 0 &&
+        (!form.requireGuestGps || Boolean(location)),
       tables: form.tables.map((t) => ({
         ...t,
         label: t.label.trim(),
@@ -254,6 +262,7 @@ function RestaurantFormFields({
         lat: parsed.data.location ? String(parsed.data.location.lat) : "",
         lng: parsed.data.location ? String(parsed.data.location.lng) : "",
         orderGeoRadiusMeters: String(parsed.data.orderGeoRadiusMeters),
+        requireGuestGps: parsed.data.requireGuestGps,
         orderingEnabled: parsed.data.orderingEnabled,
         tables: parsed.data.tables,
       }));
@@ -526,6 +535,37 @@ function RestaurantFormFields({
           <FieldHint>Default 120m. Increase slightly for large venues.</FieldHint>
         </div>
 
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[#14110e]/10 bg-[#faf7f1] px-4 py-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={form.requireGuestGps}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                requireGuestGps: e.target.checked,
+              }))
+            }
+          />
+          <span>
+            <span className="block text-sm font-semibold text-[#14110e]">
+              Require guest GPS (recommended)
+            </span>
+            <span className="mt-0.5 block text-xs text-[#7a7164]">
+              Guests must be near your venue pin to order. Turn this off only if
+              indoor GPS is unreliable — anyone with the menu link can then place
+              tickets from elsewhere (you can still decline them).
+            </span>
+          </span>
+        </label>
+
+        {!form.requireGuestGps ? (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-50 px-4 py-3 text-xs text-amber-950">
+            GPS check is off. Keep confirming orders carefully — prank tickets
+            from outside the restaurant become easier.
+          </div>
+        ) : null}
+
         <div className="space-y-3 border-t border-[#14110e]/8 pt-4">
           <Label>Tables & seats</Label>
           <div className="flex gap-2">
@@ -616,8 +656,12 @@ function RestaurantFormFields({
             </span>
             <span className="mt-0.5 block text-xs text-[#7a7164]">
               {canEnableOrdering
-                ? "Guests on your published menu can place table tickets when they are nearby."
-                : "Add a venue pin and at least one active table first."}
+                ? form.requireGuestGps
+                  ? "Guests on your published menu can place table tickets when they are nearby."
+                  : "Guests can place table tickets without a location check."
+                : form.requireGuestGps
+                  ? "Add a venue pin and at least one active table first."
+                  : "Add at least one active table first."}
             </span>
           </span>
         </label>
