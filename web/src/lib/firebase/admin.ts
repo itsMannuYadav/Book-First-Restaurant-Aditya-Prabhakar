@@ -7,44 +7,12 @@ import {
 } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import {
+  isAdminConfigured,
+  readServiceAccount,
+} from "@/lib/firebase/admin-env";
 
-function readServiceAccount(): ServiceAccount | null {
-  const json = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON?.trim();
-  if (json) {
-    try {
-      const parsed = JSON.parse(json) as ServiceAccount;
-      return parsed;
-    } catch {
-      // Fall through to discrete vars — a partial/multiline paste is common.
-      console.warn(
-        "[firebase-admin] FIREBASE_ADMIN_SERVICE_ACCOUNT_JSON is invalid; trying FIREBASE_ADMIN_PROJECT_ID / CLIENT_EMAIL / PRIVATE_KEY",
-      );
-    }
-  }
-
-  const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID?.trim();
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
-  let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.trim();
-
-  if (!projectId || !clientEmail || !privateKey) return null;
-
-  // Strip wrapping quotes from .env values.
-  if (
-    (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
-    (privateKey.startsWith("'") && privateKey.endsWith("'"))
-  ) {
-    privateKey = privateKey.slice(1, -1);
-  }
-
-  // Support escaped newlines from .env files.
-  privateKey = privateKey.replace(/\\n/g, "\n");
-
-  return {
-    projectId,
-    clientEmail,
-    privateKey,
-  };
-}
+export { isAdminConfigured, readServiceAccount } from "@/lib/firebase/admin-env";
 
 let app: App | null = null;
 
@@ -62,13 +30,19 @@ export function getAdminApp(): App {
     );
   }
 
-  app = initializeApp({
-    credential: cert(serviceAccount),
-    projectId:
-      typeof serviceAccount.projectId === "string"
-        ? serviceAccount.projectId
-        : process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  });
+  try {
+    app = initializeApp({
+      credential: cert(serviceAccount as ServiceAccount),
+      projectId:
+        serviceAccount.projectId ||
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Firebase Admin failed to initialize (check FIREBASE_ADMIN_PRIVATE_KEY formatting on Vercel): ${message}`,
+    );
+  }
   return app;
 }
 
@@ -78,12 +52,4 @@ export function getAdminDb(): Firestore {
 
 export function getAdminAuth(): Auth {
   return getAuth(getAdminApp());
-}
-
-export function isAdminConfigured(): boolean {
-  try {
-    return readServiceAccount() !== null;
-  } catch {
-    return false;
-  }
 }

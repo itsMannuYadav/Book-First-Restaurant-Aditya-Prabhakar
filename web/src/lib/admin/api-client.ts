@@ -31,10 +31,18 @@ export async function adminFetch<T = unknown>(
     },
   });
 
-  const json = (await response.json().catch(() => ({}))) as {
-    message?: string;
-    code?: string;
-  } & T;
+  const raw = await response.text();
+  let json: { message?: string; code?: string } & T;
+  try {
+    json = (raw ? JSON.parse(raw) : {}) as { message?: string; code?: string } & T;
+  } catch {
+    throw new AdminApiError(
+      response.status >= 500
+        ? "Server error loading admin data. On Vercel, confirm FIREBASE_ADMIN_* and ADMIN_EMAILS are set, then redeploy."
+        : `Request failed (${response.status})`,
+      response.status,
+    );
+  }
 
   if (!response.ok) {
     throw new AdminApiError(

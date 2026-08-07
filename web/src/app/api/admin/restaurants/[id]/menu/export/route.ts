@@ -1,9 +1,5 @@
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
 import { buildMenuCsv } from "@/lib/admin/csv-menu-shared";
-import {
-  adminListCategories,
-  adminListMenuItems,
-} from "@/lib/admin/server";
 
 export const runtime = "nodejs";
 
@@ -14,6 +10,9 @@ export async function GET(
   try {
     await requireAdmin(request);
     const { id } = await context.params;
+    const { adminListCategories, adminListMenuItems } = await import(
+      "@/lib/admin/server"
+    );
     const [categories, items] = await Promise.all([
       adminListCategories(id),
       adminListMenuItems(id),

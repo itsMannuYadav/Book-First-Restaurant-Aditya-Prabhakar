@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
-import { writeAdminAuditLog } from "@/lib/admin/audit";
-import {
-  adminDeleteMenuItem,
-  adminUpdateMenuItem,
-} from "@/lib/admin/server";
 
 export const runtime = "nodejs";
 
@@ -27,6 +22,8 @@ export async function PATCH(
     const actor = await requireAdmin(request);
     const { itemId } = await context.params;
     const body = patchSchema.parse(await request.json());
+    const { adminUpdateMenuItem } = await import("@/lib/admin/server");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
     await adminUpdateMenuItem(itemId, body);
     await writeAdminAuditLog({
       actor,
@@ -48,6 +45,8 @@ export async function DELETE(
   try {
     const actor = await requireAdmin(request);
     const { itemId } = await context.params;
+    const { adminDeleteMenuItem } = await import("@/lib/admin/server");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
     await adminDeleteMenuItem(itemId);
     await writeAdminAuditLog({
       actor,

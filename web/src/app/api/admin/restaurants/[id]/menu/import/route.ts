@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
-import { writeAdminAuditLog } from "@/lib/admin/audit";
-import { importMenuCsv } from "@/lib/admin/csv-menu";
 
 export const runtime = "nodejs";
 
@@ -19,6 +17,8 @@ export async function POST(
     const actor = await requireAdmin(request);
     const { id } = await context.params;
     const body = bodySchema.parse(await request.json());
+    const { importMenuCsv } = await import("@/lib/admin/csv-menu");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
     const result = await importMenuCsv({
       restaurantId: id,
       csvText: body.csvText,

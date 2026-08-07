@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
-import { writeAdminAuditLog } from "@/lib/admin/audit";
-import {
-  adminGetRestaurant,
-  adminPatchRestaurant,
-} from "@/lib/admin/server";
 
 export const runtime = "nodejs";
 
@@ -16,6 +11,7 @@ export async function GET(
   try {
     await requireAdmin(request);
     const { id } = await context.params;
+    const { adminGetRestaurant } = await import("@/lib/admin/server");
     const restaurant = await adminGetRestaurant(id);
     if (!restaurant) {
       return NextResponse.json(
@@ -53,6 +49,8 @@ export async function PATCH(
     const actor = await requireAdmin(request);
     const { id } = await context.params;
     const body = patchSchema.parse(await request.json());
+    const { adminPatchRestaurant } = await import("@/lib/admin/server");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
     const restaurant = await adminPatchRestaurant(id, body);
     await writeAdminAuditLog({
       actor,

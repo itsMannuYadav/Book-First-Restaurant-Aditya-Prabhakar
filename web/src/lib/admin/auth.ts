@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAdminAuth, isAdminConfigured } from "@/lib/firebase/admin";
 import { isAdminEmail } from "@/lib/admin/emails";
+import { isAdminConfigured } from "@/lib/firebase/admin-env";
 
 export type AdminActor = {
   uid: string;
@@ -17,6 +17,10 @@ export class AdminAuthError extends Error {
   }
 }
 
+/**
+ * Env checks first; firebase-admin loads only after a bearer token is present
+ * (avoids Vercel boot crashes when the Admin SDK fails to load at import time).
+ */
 export async function requireAdmin(request: Request): Promise<AdminActor> {
   if (!isAdminConfigured()) {
     throw new AdminAuthError(
@@ -31,11 +35,14 @@ export async function requireAdmin(request: Request): Promise<AdminActor> {
     throw new AdminAuthError("Missing Authorization bearer token.");
   }
 
+  const { getAdminAuth } = await import("@/lib/firebase/admin");
+
   let decoded;
   try {
     decoded = await getAdminAuth().verifyIdToken(match[1]);
-  } catch {
-    throw new AdminAuthError("Invalid or expired auth token.");
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "token error";
+    throw new AdminAuthError(`Invalid or expired auth token. (${detail})`);
   }
 
   const email = decoded.email?.trim().toLowerCase() ?? "";

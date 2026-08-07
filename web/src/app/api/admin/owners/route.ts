@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
-import { writeAdminAuditLog } from "@/lib/admin/audit";
-import {
-  adminListOwners,
-  adminListPendingOwners,
-  adminPatchOwner,
-} from "@/lib/admin/server";
 
 export const runtime = "nodejs";
 
@@ -15,6 +9,9 @@ export async function GET(request: Request) {
     await requireAdmin(request);
     const { searchParams } = new URL(request.url);
     const pendingOnly = searchParams.get("pending") === "1";
+    const { adminListOwners, adminListPendingOwners } = await import(
+      "@/lib/admin/server"
+    );
     const owners = pendingOnly
       ? await adminListPendingOwners()
       : await adminListOwners();
@@ -41,6 +38,9 @@ export async function PATCH(request: Request) {
         { status: 400 },
       );
     }
+
+    const { adminPatchOwner } = await import("@/lib/admin/server");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
 
     const owner = await adminPatchOwner(uid, {
       accountStatus: body.accountStatus,

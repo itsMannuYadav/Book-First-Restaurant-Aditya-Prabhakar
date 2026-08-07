@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { createHash } from "crypto";
-import type { DocumentData } from "firebase-admin/firestore";
 import { COLLECTIONS } from "@/lib/firebase/collections";
-import { getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
+import { isAdminConfigured } from "@/lib/firebase/admin-env";
 import {
   DEFAULT_ORDER_GEO_RADIUS_METERS,
   MAX_GPS_ACCURACY_METERS,
@@ -89,7 +88,7 @@ export type PlaceOrderResult =
       meta?: Record<string, number | string>;
     };
 
-function mapGuestView(id: string, data: DocumentData): GuestOrderView {
+function mapGuestView(id: string, data: Record<string, unknown>): GuestOrderView {
   return {
     id,
     shortCode: String(data.shortCode ?? ""),
@@ -157,6 +156,7 @@ export async function placeOrder(
     }
   }
 
+  const { getAdminDb } = await import("@/lib/firebase/admin");
   const db = getAdminDb();
   const restaurantRef = db.collection(COLLECTIONS.restaurants).doc(body.restaurantId);
   const restaurantSnap = await restaurantRef.get();
@@ -347,7 +347,7 @@ export async function placeOrder(
     itemIds.map((id) => db.collection(COLLECTIONS.menuItems).doc(id).get()),
   );
 
-  const itemById = new Map<string, DocumentData>();
+  const itemById = new Map<string, Record<string, unknown>>();
   for (const snap of itemSnaps) {
     if (!snap.exists) continue;
     const data = snap.data()!;
@@ -450,11 +450,12 @@ export async function getGuestOrder(
   if (!isAdminConfigured()) return null;
   if (!orderId || !token) return null;
 
+  const { getAdminDb } = await import("@/lib/firebase/admin");
   const db = getAdminDb();
   const snap = await db.collection(COLLECTIONS.orders).doc(orderId).get();
   if (!snap.exists) return null;
 
-  const data = snap.data()!;
+  const data = snap.data() as Record<string, unknown>;
   const hash = String(data.accessTokenHash ?? "");
   if (!tokensMatch(token, hash)) return null;
 

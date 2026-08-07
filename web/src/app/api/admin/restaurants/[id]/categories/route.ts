@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminErrorResponse, requireAdmin } from "@/lib/admin/auth";
-import { writeAdminAuditLog } from "@/lib/admin/audit";
-import {
-  adminCreateCategory,
-  adminListCategories,
-} from "@/lib/admin/server";
 
 export const runtime = "nodejs";
 
@@ -16,6 +11,7 @@ export async function GET(
   try {
     await requireAdmin(request);
     const { id } = await context.params;
+    const { adminListCategories } = await import("@/lib/admin/server");
     const categories = await adminListCategories(id);
     return NextResponse.json({ categories });
   } catch (err) {
@@ -38,6 +34,8 @@ export async function POST(
     const actor = await requireAdmin(request);
     const { id } = await context.params;
     const body = createSchema.parse(await request.json());
+    const { adminCreateCategory } = await import("@/lib/admin/server");
+    const { writeAdminAuditLog } = await import("@/lib/admin/audit");
     const category = await adminCreateCategory(id, body);
     await writeAdminAuditLog({
       actor,
