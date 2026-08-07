@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Keep firebase-admin out of the bundler — avoids broken serverless boots on Vercel.
-  serverExternalPackages: ["firebase-admin"],
+  // Do NOT externalize firebase-admin on Vercel.
+  // External CJS load of jwks-rsa → require('jose') fails because jose@6 is ESM-only.
 };
 
 export default nextConfig;
