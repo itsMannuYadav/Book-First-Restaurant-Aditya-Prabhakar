@@ -102,6 +102,72 @@
       --accent-glow: rgba(37, 99, 235, 0.08);
     }
 
+    /* THEME 4: SAVAN MONSOON */
+    [data-theme="savan"] {
+      --bg-page: #061E12;
+      --bg-header-overlay: linear-gradient(180deg, rgba(6, 30, 18, 0.45) 0%, rgba(6, 30, 18, 0.95) 80%, #061E12 100%);
+      --bg-card: rgba(14, 46, 28, 0.88);
+      --bg-card-hover: rgba(22, 64, 40, 0.95);
+      --bg-surface: #0B2C1B;
+      --bg-pill: rgba(74, 222, 128, 0.08);
+      --bg-pill-active: linear-gradient(135deg, #22C55E 0%, #15803D 100%);
+      --text-pill-active: #05190E;
+      --border-color: rgba(74, 222, 128, 0.25);
+      --border-color-muted: rgba(74, 222, 128, 0.12);
+      --text-main: #F0FDF4;
+      --text-muted: #A7F3D0;
+      --text-accent: #4ADE80;
+      --heading-font: 'Playfair Display', serif;
+      --gold-gradient: linear-gradient(135deg, #BBF7D0 0%, #4ADE80 50%, #15803D 100%);
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(74, 222, 128, 0.12);
+      --badge-bg: rgba(34, 197, 94, 0.18);
+      --badge-text: #BBF7D0;
+      --badge-border: rgba(74, 222, 128, 0.4);
+      --veg-color: #4ADE80;
+      --nonveg-color: #F87171;
+      --accent-glow: rgba(74, 222, 128, 0.2);
+    }
+
+    /* Savan Theme Visual Overlay & Keyframes */
+    .savan-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      overflow: hidden;
+    }
+    [data-theme="savan"] .savan-overlay {
+      display: block;
+    }
+    .savan-raindrop {
+      position: absolute;
+      top: 0;
+      width: 1.5px;
+      background: linear-gradient(to bottom, transparent, rgba(134, 239, 172, 0.8), rgba(255, 255, 255, 0.6));
+      animation: savanRainDrop linear infinite;
+    }
+    .savan-leaf {
+      position: absolute;
+      top: 0;
+      color: rgba(74, 222, 128, 0.65);
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.35));
+      animation: savanLeafFloat ease-in-out infinite;
+    }
+    @keyframes savanRainDrop {
+      0% { transform: translateY(-30px); opacity: 0; }
+      15% { opacity: 0.6; }
+      85% { opacity: 0.6; }
+      100% { transform: translateY(105vh); opacity: 0; }
+    }
+    @keyframes savanLeafFloat {
+      0% { transform: translateY(-30px) rotate(0deg) translateX(0); opacity: 0; }
+      15% { opacity: 0.8; }
+      50% { transform: translateY(50vh) rotate(140deg) translateX(20px); }
+      85% { opacity: 0.8; }
+      100% { transform: translateY(105vh) rotate(280deg) translateX(-10px); opacity: 0; }
+    }
+
     /* Override body background for Rustic theme container switch */
     [data-theme="rustic"] body {
       background-color: var(--bg-surface);
@@ -695,6 +761,12 @@
 </head>
 <body>
 
+  <!-- SAVAN MONSOON ATMOSPHERIC OVERLAY (Gentle Raindrops & Leaves) -->
+  <div class="savan-overlay" id="savanOverlay">
+    <div id="savanRainContainer"></div>
+    <div id="savanLeavesContainer"></div>
+  </div>
+
   <!-- TOP BAR: THEME SELECTOR & LIVE SEARCH -->
   <div class="top-bar">
     <div class="top-bar-inner">
@@ -707,6 +779,9 @@
         </button>
         <button class="theme-btn" data-theme-target="minimal" title="Minimal White Theme">
           <span>✨</span> Minimal White
+        </button>
+        <button class="theme-btn" data-theme-target="savan" title="Savan Monsoon Theme">
+          <span>🌧️</span> Savan Monsoon
         </button>
       </div>
 
@@ -810,7 +885,7 @@
         menuData = await response.json();
         
         // Load initial theme from menu.json if available
-        if (menuData.theme && ['dark', 'rustic', 'minimal'].includes(menuData.theme.toLowerCase())) {
+        if (menuData.theme && ['dark', 'rustic', 'minimal', 'savan'].includes(menuData.theme.toLowerCase())) {
           setTheme(menuData.theme.toLowerCase());
         } else {
           setTheme('dark');
@@ -832,10 +907,42 @@
       }
     }
 
+    function initSavanOverlay() {
+      const rainContainer = document.getElementById('savanRainContainer');
+      const leavesContainer = document.getElementById('savanLeavesContainer');
+      if (!rainContainer || !leavesContainer) return;
+      if (rainContainer.children.length > 0) return;
+
+      for (let i = 0; i < 22; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'savan-raindrop';
+        drop.style.left = `${(i * 4.5 + (i % 5) * 2) % 100}%`;
+        drop.style.height = `${30 + (i % 5) * 10}px`;
+        drop.style.animationDuration = `${2.2 + (i % 5) * 0.4}s`;
+        drop.style.animationDelay = `${(i * 0.35) % 3.5}s`;
+        drop.style.opacity = `${0.2 + (i % 4) * 0.1}`;
+        rainContainer.appendChild(drop);
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const leaf = document.createElement('div');
+        leaf.className = 'savan-leaf';
+        leaf.style.left = `${(i * 12 + 6) % 94}%`;
+        leaf.style.animationDuration = `${7 + (i % 4) * 2}s`;
+        leaf.style.animationDelay = `${(i * 1.1) % 6}s`;
+        const size = 20 + (i % 3) * 6;
+        leaf.innerHTML = `<svg width="${size}" height="${size * 1.3}" viewBox="0 0 24 32" fill="currentColor"><path d="M12 2C6.5 2 2 7.5 2 14.5C2 19.5 5.8 23.5 10.5 23.9L10 30C10 30.6 10.4 31 11 31C11.6 31 12 30.6 12 30L11.5 23.9C16.2 23.5 20 19.5 20 14.5C20 7.5 15.5 2 12 2ZM12 21.5C8 21.5 4.5 18 4.5 14C4.5 9.5 8.5 4.8 12 3.6C15.5 4.8 19.5 9.5 19.5 14C19.5 18 16 21.5 12 21.5Z"/><path d="M12 6V19M12 11L8.5 8.5M12 14L15.5 11.5M12 17L9 15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.75"/></svg>`;
+        leavesContainer.appendChild(leaf);
+      }
+    }
+
     // Theme Switcher Logic
     function setTheme(themeName) {
       selectedTheme = themeName;
       document.documentElement.setAttribute('data-theme', themeName);
+      if (themeName === 'savan') {
+        initSavanOverlay();
+      }
 
       themeButtons.forEach(btn => {
         if (btn.getAttribute('data-theme-target') === themeName) {

@@ -3,7 +3,7 @@ import { DEFAULT_MENU_THEME } from "@/constants/menu-themes";
 
 function toTheme(value?: string): MenuThemeId {
   const normalized = value?.toLowerCase();
-  if (normalized === "dark" || normalized === "rustic" || normalized === "minimal") {
+  if (normalized === "dark" || normalized === "rustic" || normalized === "minimal" || normalized === "savan") {
     return normalized;
   }
   return DEFAULT_MENU_THEME;

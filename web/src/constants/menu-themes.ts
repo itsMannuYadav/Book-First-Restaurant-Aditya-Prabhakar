@@ -10,6 +10,7 @@ export const MENU_THEMES: MenuThemeOption[] = [
   { id: "dark", label: "Dark Luxury", shortLabel: "Dark" },
   { id: "rustic", label: "Rustic Wooden", shortLabel: "Rustic" },
   { id: "minimal", label: "Minimal White", shortLabel: "Minimal" },
+  { id: "savan", label: "Savan Monsoon", shortLabel: "Savan" },
 ];
 
 export const DEFAULT_MENU_THEME: MenuThemeId = "dark";

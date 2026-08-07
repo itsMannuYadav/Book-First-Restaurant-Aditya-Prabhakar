@@ -31,7 +31,7 @@ export const restaurantSchema = z.object({
   phone: z.string().optional(),
   timing: z.string().optional(),
   currency: z.string().min(1, "Currency is required (example: ₹)"),
-  theme: z.enum(["dark", "rustic", "minimal"]),
+  theme: z.enum(["dark", "rustic", "minimal", "savan"]),
   status: z.enum(["draft", "published", "archived"]),
   location: z
     .object({
