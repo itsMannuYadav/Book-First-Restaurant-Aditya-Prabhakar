@@ -27,7 +27,23 @@ export function getFirebaseErrorMessage(error: unknown): string {
         return "Permission denied by Firestore. If you just changed rules, wait ~30s and retry. If this is Confirm/Decline on an order, re-publish the latest web/firestore.rules (order update rules were tightened by mistake earlier). Also make sure you’re still signed in as the restaurant owner.";
       case "failed-precondition":
         return "Firestore needs an index for this query. Open the error link in the browser console to create it, then retry.";
+      case "storage/unauthorized":
+        return "You don’t have permission to upload images. Make sure you’re signed in and Storage rules allow restaurant uploads.";
+      case "storage/canceled":
+        return "Upload was cancelled.";
+      case "storage/retry-limit-exceeded":
+        return "Upload failed after several retries. Check your connection and try again.";
+      case "storage/invalid-format":
+      case "storage/invalid-argument":
+        return "That image couldn’t be uploaded. Try a different JPG or PNG.";
+      case "storage/unknown":
+      case "storage/quota-exceeded":
+      case "storage/server-file-wrong-size":
+        return "Logo upload isn’t available right now. Image storage is still being set up — please try again later.";
       default:
+        if (error.code.startsWith("storage/")) {
+          return "Logo upload isn’t available right now. Image storage is still being set up — please try again later.";
+        }
         return error.message;
     }
   }

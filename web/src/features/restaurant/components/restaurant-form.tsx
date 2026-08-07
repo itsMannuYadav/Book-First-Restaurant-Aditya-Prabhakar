@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { ImagePlus, MapPin, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { HoursPicker } from "@/components/shared/hours-picker";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,11 +12,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
 import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
+import {
+  deleteRestaurantLogo,
+  uploadRestaurantLogo,
+  validateRestaurantImage,
+} from "@/lib/firebase/storage";
 import { restaurantSchema } from "@/lib/validators/forms";
 import type { RestaurantInput } from "@/lib/validators/forms";
 import { slugify } from "@/lib/utils/string";
 import { formatHours, DEFAULT_HOURS } from "@/lib/utils/hours";
 import { cn } from "@/lib/utils";
+import {
+  LOGO_UPLOADS_ENABLED,
+  LOGO_UPLOADS_UNAVAILABLE_MESSAGE,
+} from "@/constants/features";
 import { MENU_THEMES } from "@/constants/menu-themes";
 import { DEFAULT_ORDER_GEO_RADIUS_METERS } from "@/constants/orders";
 import type { MenuThemeId, Restaurant } from "@/types";
@@ -27,6 +36,7 @@ type FormState = {
   slug: string;
   tagline: string;
   description: string;
+  logoUrl: string;
   address: string;
   phone: string;
   timing: string;
@@ -64,6 +74,7 @@ function restaurantToForm(restaurant: Restaurant): FormState {
     description:
       restaurant.description ||
       "Welcome to our kitchen. Update this text with your story, specialties, and what guests should try first.",
+    logoUrl: restaurant.logoUrl || "",
     address: restaurant.address || "Add your street address here",
     phone: restaurant.phone || "+91 98765 43210",
     timing: restaurant.timing || formatHours(DEFAULT_HOURS),
@@ -82,7 +93,7 @@ function restaurantToForm(restaurant: Restaurant): FormState {
 }
 
 export function RestaurantForm() {
-  const { restaurant, loading, error, save } = useOwnerRestaurant();
+  const { restaurant, loading, error, save, saveLogo } = useOwnerRestaurant();
 
   if (loading) {
     return (
@@ -107,20 +118,28 @@ export function RestaurantForm() {
   return (
     <RestaurantFormFields
       key={`${restaurant.id}:${restaurant.updatedAt}`}
+      restaurantId={restaurant.id}
       save={save}
+      saveLogo={saveLogo}
       initial={restaurantToForm(restaurant)}
     />
   );
 }
 
 function RestaurantFormFields({
+  restaurantId,
   save,
+  saveLogo,
   initial,
 }: {
+  restaurantId: string;
   save: (input: RestaurantInput) => Promise<void>;
+  saveLogo: (logoUrl: string) => Promise<void>;
   initial: FormState;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [locating, setLocating] = useState(false);
   const [newTableLabel, setNewTableLabel] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -196,6 +215,60 @@ function RestaurantFormFields({
     }));
   }
 
+  function notifyLogoUnavailable() {
+    toast.message("Logo upload coming soon", {
+      description: LOGO_UPLOADS_UNAVAILABLE_MESSAGE,
+      duration: 6000,
+    });
+  }
+
+  async function onLogoSelected(file: File | undefined) {
+    if (!file) return;
+    if (!LOGO_UPLOADS_ENABLED) {
+      notifyLogoUnavailable();
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const validationError = validateRestaurantImage(file);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      const logoUrl = await uploadRestaurantLogo(restaurantId, file);
+      await saveLogo(logoUrl);
+      setForm((prev) => ({ ...prev, logoUrl }));
+      toast.success("Logo updated — it will show on your public menu");
+    } catch (err) {
+      toast.error(getFirebaseErrorMessage(err));
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function removeLogo() {
+    if (!LOGO_UPLOADS_ENABLED) {
+      notifyLogoUnavailable();
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      await deleteRestaurantLogo(restaurantId);
+      await saveLogo("");
+      setForm((prev) => ({ ...prev, logoUrl: "" }));
+      toast.success("Logo removed");
+    } catch (err) {
+      toast.error(getFirebaseErrorMessage(err));
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setFieldErrors({});
@@ -214,6 +287,7 @@ function RestaurantFormFields({
       slug: slugify(form.slug),
       tagline: form.tagline.trim(),
       description: form.description.trim(),
+      logoUrl: form.logoUrl.trim(),
       address: form.address.trim(),
       phone: form.phone.trim(),
       timing: form.timing.trim(),
@@ -288,6 +362,94 @@ function RestaurantFormFields({
       </div>
 
       <div className="grid gap-5 rounded-3xl border border-[#14110e]/8 bg-white/80 p-5 shadow-sm sm:grid-cols-2 sm:p-6">
+        <div className="space-y-3 sm:col-span-2">
+          <Label>Restaurant logo</Label>
+          {!LOGO_UPLOADS_ENABLED ? (
+            <div
+              role="status"
+              className="rounded-2xl border border-amber-500/25 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+            >
+              <p className="font-semibold">Logo upload coming soon</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-950/80">
+                Image storage isn’t enabled on this project yet. Guests will see
+                your restaurant’s letter mark for now — uploading a custom logo
+                will unlock once setup is finished.
+              </p>
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-4">
+            {form.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={form.logoUrl}
+                alt="Restaurant logo preview"
+                className="size-20 rounded-full border border-[#14110e]/10 object-cover shadow-sm"
+              />
+            ) : (
+              <div
+                className="flex size-20 items-center justify-center rounded-full border border-dashed border-[#14110e]/20 bg-[#faf7f1] text-lg font-semibold text-[#8a8173]"
+                aria-hidden
+              >
+                {(form.name.trim().slice(0, 1) || "?").toUpperCase()}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                disabled={!LOGO_UPLOADS_ENABLED}
+                onChange={(e) => void onLogoSelected(e.target.files?.[0])}
+              />
+              <button
+                type="button"
+                disabled={uploadingLogo || pending}
+                onClick={() => {
+                  if (!LOGO_UPLOADS_ENABLED) {
+                    notifyLogoUnavailable();
+                    return;
+                  }
+                  fileInputRef.current?.click();
+                }}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "gap-2 border-[#14110e]/10",
+                  !LOGO_UPLOADS_ENABLED && "opacity-70",
+                )}
+              >
+                <ImagePlus className="size-4" />
+                {uploadingLogo
+                  ? "Uploading…"
+                  : !LOGO_UPLOADS_ENABLED
+                    ? "Upload logo (soon)"
+                    : form.logoUrl
+                      ? "Change logo"
+                      : "Upload logo"}
+              </button>
+              {form.logoUrl && LOGO_UPLOADS_ENABLED ? (
+                <button
+                  type="button"
+                  disabled={uploadingLogo || pending}
+                  onClick={() => void removeLogo()}
+                  className={cn(
+                    buttonVariants({ variant: "ghost" }),
+                    "gap-2 text-[#8a8173]",
+                  )}
+                >
+                  <Trash2 className="size-4" />
+                  Remove
+                </button>
+              ) : null}
+            </div>
+          </div>
+          <FieldHint>
+            {LOGO_UPLOADS_ENABLED
+              ? "Square works best. Shown as the circle mark on your public menu. JPG, PNG, WebP, or GIF — up to 2 MB."
+              : "When this is ready, a square logo works best on your public menu."}
+          </FieldHint>
+        </div>
+
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="name">Restaurant name</Label>
           <Input

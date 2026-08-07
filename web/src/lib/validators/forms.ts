@@ -26,6 +26,7 @@ export const restaurantSchema = z.object({
     ),
   tagline: z.string().optional(),
   description: z.string().optional(),
+  logoUrl: z.string().optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   timing: z.string().optional(),

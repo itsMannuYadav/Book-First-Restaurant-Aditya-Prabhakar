@@ -273,6 +273,7 @@ export async function updateRestaurant(
     slug,
     tagline: input.tagline?.trim() ?? "",
     description: input.description?.trim() ?? "",
+    logoUrl: input.logoUrl?.trim() ?? "",
     address: input.address?.trim() ?? "",
     phone: input.phone?.trim() ?? "",
     timing: input.timing?.trim() ?? "",
@@ -295,6 +296,17 @@ export async function updateRestaurantTheme(
   const { db } = requireFirebase();
   await updateDoc(doc(db, COLLECTIONS.restaurants, id), {
     theme,
+    updatedAt: nowIso(),
+  });
+}
+
+export async function updateRestaurantLogo(
+  id: string,
+  logoUrl: string,
+): Promise<void> {
+  const { db } = requireFirebase();
+  await updateDoc(doc(db, COLLECTIONS.restaurants, id), {
+    logoUrl: logoUrl.trim(),
     updatedAt: nowIso(),
   });
 }

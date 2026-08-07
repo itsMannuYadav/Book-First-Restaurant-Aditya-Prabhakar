@@ -7,6 +7,7 @@ import {
   getRestaurantByOwnerId,
   normalizeRestaurantSlug,
   updateRestaurant,
+  updateRestaurantLogo,
   updateRestaurantTheme,
 } from "@/lib/firebase/restaurants";
 import type { Restaurant } from "@/types";
@@ -68,6 +69,18 @@ export function useOwnerRestaurant() {
     [restaurant, refresh],
   );
 
+  const saveLogo = useCallback(
+    async (logoUrl: string) => {
+      if (!restaurant) return;
+      await updateRestaurantLogo(restaurant.id, logoUrl);
+      // Update logo only — don’t bump updatedAt or the form remounts mid-edit.
+      setRestaurant((prev) =>
+        prev ? { ...prev, logoUrl: logoUrl || undefined } : prev,
+      );
+    },
+    [restaurant],
+  );
+
   return {
     restaurant,
     loading,
@@ -75,5 +88,6 @@ export function useOwnerRestaurant() {
     refresh,
     save,
     saveTheme,
+    saveLogo,
   };
 }
