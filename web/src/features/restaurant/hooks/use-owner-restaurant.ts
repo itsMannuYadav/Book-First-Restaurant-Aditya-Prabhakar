@@ -15,13 +15,13 @@ import type { MenuThemeId } from "@/types";
 import type { RestaurantInput } from "@/lib/validators/forms";
 
 export function useOwnerRestaurant() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!user) {
+    if (!user || isAdmin) {
       setRestaurant(null);
       setLoading(false);
       return;
@@ -35,6 +35,7 @@ export function useOwnerRestaurant() {
         next = await createRestaurant({
           ownerId: user.uid,
           name: user.displayName || "My Restaurant",
+          approvalStatus: "pending",
         });
       } else {
         next = await normalizeRestaurantSlug(next);
@@ -45,7 +46,7 @@ export function useOwnerRestaurant() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     void refresh();

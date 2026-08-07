@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleAuthButton } from "@/features/auth/components/google-auth-button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { isAdminEmail } from "@/lib/admin/emails";
 import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
 import { loginSchema } from "@/lib/validators/forms";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,9 @@ export function LoginForm() {
     setPending(true);
     try {
       await signIn(parsed.data);
-      router.replace(ROUTES.dashboard);
+      router.replace(
+        isAdminEmail(parsed.data.email) ? ROUTES.admin : ROUTES.dashboard,
+      );
     } catch (err) {
       setError(getFirebaseErrorMessage(err));
     } finally {
@@ -49,7 +52,11 @@ export function LoginForm() {
     setGooglePending(true);
     try {
       await signInGoogle();
-      router.replace(ROUTES.dashboard);
+      const { auth: firebaseAuth } = await import("@/lib/firebase/client");
+      const signedInEmail = firebaseAuth?.currentUser?.email;
+      router.replace(
+        isAdminEmail(signedInEmail) ? ROUTES.admin : ROUTES.dashboard,
+      );
     } catch (err) {
       setError(getFirebaseErrorMessage(err));
     } finally {

@@ -12,6 +12,7 @@ import {
 import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +51,7 @@ const actions = [
 
 export default function DashboardHomePage() {
   const { restaurant, loading } = useOwnerRestaurant();
+  const { profile } = useAuth();
 
   if (loading) {
     return (
@@ -71,6 +73,11 @@ export default function DashboardHomePage() {
         ? "Draft"
         : restaurant?.status ?? "Setup";
 
+  const awaitingApproval =
+    profile?.accountStatus === "pending" ||
+    restaurant?.approvalStatus === "pending" ||
+    restaurant?.approvalStatus === "rejected";
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -82,12 +89,23 @@ export default function DashboardHomePage() {
             {restaurant?.name ?? "Dashboard"}
           </h1>
           <p className="mt-2 text-[#7a7164]">
-            Keep your digital menu polished and ready to share.
+            {awaitingApproval
+              ? "Build your menu while you wait — publishing unlocks after team approval."
+              : "Keep your digital menu polished and ready to share."}
           </p>
         </div>
         <div className="rounded-full border border-[#14110e]/10 bg-white px-3 py-1.5 text-sm text-[#5c554a]">
-          Status ·{" "}
-          <span className="font-semibold text-[#14110e]">{statusLabel}</span>
+          {awaitingApproval ? (
+            <>
+              Approval ·{" "}
+              <span className="font-semibold text-amber-800">Pending</span>
+            </>
+          ) : (
+            <>
+              Status ·{" "}
+              <span className="font-semibold text-[#14110e]">{statusLabel}</span>
+            </>
+          )}
         </div>
       </div>
 

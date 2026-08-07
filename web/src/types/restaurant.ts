@@ -2,6 +2,8 @@ import type { MenuThemeId } from "./menu";
 
 export type RestaurantStatus = "draft" | "published" | "archived";
 
+export type RestaurantApprovalStatus = "pending" | "approved" | "rejected";
+
 export interface RestaurantLocation {
   lat: number;
   lng: number;
@@ -28,6 +30,8 @@ export interface Restaurant {
   currency: string;
   theme: MenuThemeId;
   status: RestaurantStatus;
+  /** Team approval before the venue may go published. */
+  approvalStatus: RestaurantApprovalStatus;
   /** Venue pin — required before dine-in ordering can be enabled. */
   location?: RestaurantLocation;
   /** Allowed distance from venue pin (meters). Default 120. */

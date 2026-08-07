@@ -2,9 +2,19 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function ownsRestaurant(restaurantId) {
+      return isSignedIn()
+        && firestore.get(/databases/(default)/documents/restaurants/$(restaurantId)).data.ownerId
+          == request.auth.uid;
+    }
+
     match /restaurants/{restaurantId}/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if ownsRestaurant(restaurantId);
     }
   }
 }

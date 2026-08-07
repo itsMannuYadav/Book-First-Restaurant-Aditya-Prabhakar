@@ -88,5 +88,10 @@ service cloud.firestore {
     match /orderIdempotency/{keyId} {
       allow read, write: if false;
     }
+
+    // Admin audit trail — Admin SDK only.
+    match /adminAuditLogs/{logId} {
+      allow read, write: if false;
+    }
   }
 }

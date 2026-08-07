@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GoogleAuthButton } from "@/features/auth/components/google-auth-button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { isAdminEmail } from "@/lib/admin/emails";
 import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
 import { signupSchema } from "@/lib/validators/forms";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,11 @@ export function SignupForm() {
     setGooglePending(true);
     try {
       await signInGoogle();
-      router.replace(ROUTES.dashboard);
+      const { auth: firebaseAuth } = await import("@/lib/firebase/client");
+      const signedInEmail = firebaseAuth?.currentUser?.email;
+      router.replace(
+        isAdminEmail(signedInEmail) ? ROUTES.admin : ROUTES.dashboard,
+      );
     } catch (err) {
       setError(getFirebaseErrorMessage(err));
     } finally {
@@ -74,7 +79,12 @@ export function SignupForm() {
         Create your workspace
       </h1>
       <p className="mt-1 text-sm text-[#7a7164]">
-        Set up your restaurant and publish a beautiful menu
+        Set up your restaurant and start building your menu
+      </p>
+      <p className="mt-4 rounded-2xl border border-amber-500/35 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
+        After you sign up, your account waits for <strong>team approval</strong>
+        . You can edit everything as a draft right away — publishing unlocks
+        once we approve you.
       </p>
 
       {!configured ? (

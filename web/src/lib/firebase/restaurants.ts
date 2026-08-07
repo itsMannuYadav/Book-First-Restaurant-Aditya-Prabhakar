@@ -17,6 +17,7 @@ import { seedStarterMenu } from "@/lib/firebase/seed-menu";
 import { DEFAULT_ORDER_GEO_RADIUS_METERS } from "@/constants/orders";
 import type {
   Restaurant,
+  RestaurantApprovalStatus,
   RestaurantLocation,
   RestaurantStatus,
   RestaurantTable,
@@ -27,6 +28,7 @@ import type { RestaurantInput } from "@/lib/validators/forms";
 type CreateRestaurantInput = {
   ownerId: string;
   name: string;
+  approvalStatus?: RestaurantApprovalStatus;
 };
 
 function mapTables(raw: unknown): RestaurantTable[] {
@@ -72,6 +74,10 @@ function mapRestaurant(id: string, data: Record<string, unknown>): Restaurant {
     currency: String(data.currency ?? "₹"),
     theme: (data.theme as MenuThemeId) ?? "dark",
     status: (data.status as RestaurantStatus) ?? "draft",
+    // Legacy restaurants without the field stay operable.
+    approvalStatus:
+      (data.approvalStatus as RestaurantApprovalStatus | undefined) ??
+      "approved",
     location: mapLocation(data.location),
     orderGeoRadiusMeters:
       typeof data.orderGeoRadiusMeters === "number"
@@ -139,6 +145,7 @@ export async function createRestaurant(
     currency: "₹",
     theme: "rustic" as MenuThemeId,
     status: "draft" as RestaurantStatus,
+    approvalStatus: (input.approvalStatus ?? "pending") as RestaurantApprovalStatus,
     location: null,
     orderGeoRadiusMeters: DEFAULT_ORDER_GEO_RADIUS_METERS,
     requireGuestGps: true,
@@ -241,6 +248,24 @@ export async function updateRestaurant(
   const current = await getRestaurantById(id);
   if (!current) {
     throw new Error("Restaurant not found. Please refresh and try again.");
+  }
+
+  if (input.status === "published") {
+    const { getUserProfile, canPublishRestaurant } = await import(
+      "@/lib/firebase/users"
+    );
+    const owner = await getUserProfile(current.ownerId);
+    const accountStatus = owner?.accountStatus ?? "active";
+    if (
+      !canPublishRestaurant({
+        accountStatus,
+        approvalStatus: current.approvalStatus,
+      })
+    ) {
+      throw new Error(
+        "This restaurant is waiting for team approval before it can be published.",
+      );
+    }
   }
 
   // Only check uniqueness when the slug actually changes.

@@ -11,6 +11,12 @@ export const ROUTES = {
   qr: "/qr",
   settings: "/settings",
   publicMenu: (slug: string) => `/m/${slug}`,
+  admin: "/admin",
+  adminApprovals: "/admin/approvals",
+  adminOwners: "/admin/owners",
+  adminRestaurants: "/admin/restaurants",
+  adminRestaurant: (id: string) => `/admin/restaurants/${id}`,
+  adminRestaurantMenu: (id: string) => `/admin/restaurants/${id}/menu`,
 } as const;
 
 export const DASHBOARD_NAV = [
@@ -22,4 +28,11 @@ export const DASHBOARD_NAV = [
   { href: ROUTES.themes, label: "Themes" },
   { href: ROUTES.qr, label: "QR Code" },
   { href: ROUTES.settings, label: "Settings" },
+] as const;
+
+export const ADMIN_NAV = [
+  { href: ROUTES.admin, label: "Overview" },
+  { href: ROUTES.adminApprovals, label: "Approvals" },
+  { href: ROUTES.adminRestaurants, label: "Restaurants" },
+  { href: ROUTES.adminOwners, label: "Owners" },
 ] as const;

@@ -21,6 +21,7 @@ import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { PendingApprovalBanner } from "@/features/auth/components/pending-approval-banner";
 
 const NAV = [
   { href: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard },
@@ -150,7 +151,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         ) : null}
 
         <main className="flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-5xl bf-fade-up">{children}</div>
+          <div className="mx-auto w-full max-w-5xl bf-fade-up">
+            <PendingApprovalBanner />
+            {children}
+          </div>
         </main>
       </div>
     </div>

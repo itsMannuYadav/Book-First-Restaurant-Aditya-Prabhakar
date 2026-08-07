@@ -7,43 +7,52 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { isAdminEmail } from "@/lib/admin/emails";
 import { requireFirebase } from "@/lib/firebase/require";
-import { COLLECTIONS } from "@/lib/firebase/collections";
 import {
   createRestaurant,
   getRestaurantByOwnerId,
 } from "@/lib/firebase/restaurants";
 import { seedStarterMenu } from "@/lib/firebase/seed-menu";
-import { nowIso } from "@/lib/utils/string";
+import { ensureUserProfile, getUserProfile } from "@/lib/firebase/users";
 import type { SignupInput, LoginInput } from "@/lib/validators/forms";
 
+async function ensureAdminWorkspace(user: User) {
+  const displayName =
+    user.displayName || user.email?.split("@")[0] || "Admin";
+  await ensureUserProfile({
+    uid: user.uid,
+    email: user.email ?? "",
+    displayName,
+    role: "admin",
+    accountStatus: "active",
+  });
+}
+
 async function ensureOwnerWorkspace(user: User, restaurantName?: string) {
-  const { db } = requireFirebase();
-  const userRef = doc(db, COLLECTIONS.users, user.uid);
-  const existingUser = await getDoc(userRef);
-  const timestamp = nowIso();
+  const existingProfile = await getUserProfile(user.uid);
+  const isBrandNew = !existingProfile;
   const displayName =
     restaurantName?.trim() ||
     user.displayName ||
+    existingProfile?.displayName ||
     user.email?.split("@")[0] ||
     "My Restaurant";
 
-  if (!existingUser.exists()) {
-    await setDoc(userRef, {
-      uid: user.uid,
-      email: user.email ?? "",
-      displayName,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    });
-  }
+  await ensureUserProfile({
+    uid: user.uid,
+    email: user.email ?? "",
+    displayName,
+    role: "owner",
+    accountStatus: isBrandNew ? "pending" : "active",
+  });
 
   let restaurant = await getRestaurantByOwnerId(user.uid);
   if (!restaurant) {
     restaurant = await createRestaurant({
       ownerId: user.uid,
       name: displayName,
+      approvalStatus: isBrandNew ? "pending" : "approved",
     });
   } else {
     try {
@@ -54,8 +63,22 @@ async function ensureOwnerWorkspace(user: User, restaurantName?: string) {
   }
 }
 
+async function ensureWorkspace(user: User, restaurantName?: string) {
+  if (isAdminEmail(user.email)) {
+    await ensureAdminWorkspace(user);
+    return;
+  }
+  await ensureOwnerWorkspace(user, restaurantName);
+}
+
 export async function signUpOwner(input: SignupInput): Promise<User> {
   const { auth } = requireFirebase();
+
+  if (isAdminEmail(input.email)) {
+    throw new Error(
+      "This email is reserved for the team console. Sign in instead of creating an owner account.",
+    );
+  }
 
   const credential = await createUserWithEmailAndPassword(
     auth,
@@ -67,7 +90,7 @@ export async function signUpOwner(input: SignupInput): Promise<User> {
     displayName: input.restaurantName,
   });
 
-  await ensureOwnerWorkspace(credential.user, input.restaurantName);
+  await ensureWorkspace(credential.user, input.restaurantName);
   return credential.user;
 }
 
@@ -78,7 +101,7 @@ export async function signInOwner(input: LoginInput): Promise<User> {
     input.email,
     input.password,
   );
-  await ensureOwnerWorkspace(credential.user);
+  await ensureWorkspace(credential.user);
   return credential.user;
 }
 
@@ -88,7 +111,7 @@ export async function signInWithGoogle(): Promise<User> {
   provider.setCustomParameters({ prompt: "select_account" });
 
   const credential = await signInWithPopup(auth, provider);
-  await ensureOwnerWorkspace(credential.user);
+  await ensureWorkspace(credential.user);
   return credential.user;
 }
 

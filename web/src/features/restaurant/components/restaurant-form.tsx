@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { canPublishRestaurant } from "@/lib/firebase/users";
 import { getFirebaseErrorMessage } from "@/lib/firebase/errors";
 import {
   deleteRestaurantLogo,
@@ -94,6 +96,7 @@ function restaurantToForm(restaurant: Restaurant): FormState {
 
 export function RestaurantForm() {
   const { restaurant, loading, error, save, saveLogo } = useOwnerRestaurant();
+  const { profile } = useAuth();
 
   if (loading) {
     return (
@@ -115,6 +118,11 @@ export function RestaurantForm() {
 
   if (!restaurant) return null;
 
+  const publishAllowed = canPublishRestaurant({
+    accountStatus: profile?.accountStatus ?? "active",
+    approvalStatus: restaurant.approvalStatus,
+  });
+
   return (
     <RestaurantFormFields
       key={`${restaurant.id}:${restaurant.updatedAt}`}
@@ -122,6 +130,7 @@ export function RestaurantForm() {
       save={save}
       saveLogo={saveLogo}
       initial={restaurantToForm(restaurant)}
+      publishAllowed={publishAllowed}
     />
   );
 }
@@ -131,11 +140,13 @@ function RestaurantFormFields({
   save,
   saveLogo,
   initial,
+  publishAllowed,
 }: {
   restaurantId: string;
   save: (input: RestaurantInput) => Promise<void>;
   saveLogo: (logoUrl: string) => Promise<void>;
   initial: FormState;
+  publishAllowed: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
@@ -293,7 +304,7 @@ function RestaurantFormFields({
       timing: form.timing.trim(),
       currency: form.currency.trim() || "₹",
       theme: form.theme,
-      status: form.status,
+      status: publishAllowed ? form.status : form.status === "published" ? "draft" : form.status,
       location,
       orderGeoRadiusMeters: Number(form.orderGeoRadiusMeters) || DEFAULT_ORDER_GEO_RADIUS_METERS,
       requireGuestGps: form.requireGuestGps,
@@ -356,10 +367,25 @@ function RestaurantFormFields({
         description="We've prefilled example details — edit anything to match your restaurant."
       />
 
-      <div className="rounded-2xl border border-[#14110e]/8 bg-[#14110e]/[0.03] px-4 py-3 text-sm text-[#5c554a]">
-        Tip: keep Visibility on <strong>Draft</strong> while you edit. Switch to{" "}
-        <strong>Published</strong> when you’re ready for guests to scan the QR.
-      </div>
+      {!publishAllowed ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        >
+          <p className="font-semibold">Publishing is locked until approval</p>
+          <p className="mt-1 text-amber-950/85">
+            Please wait for the Book First team to approve your account. You can
+            save changes as <strong>Draft</strong> anytime — the Published
+            option stays disabled until you’re approved.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-[#14110e]/8 bg-[#14110e]/[0.03] px-4 py-3 text-sm text-[#5c554a]">
+          Tip: keep Visibility on <strong>Draft</strong> while you edit. Switch
+          to <strong>Published</strong> when you’re ready for guests to scan the
+          QR.
+        </div>
+      )}
 
       <div className="grid gap-5 rounded-3xl border border-[#14110e]/8 bg-white/80 p-5 shadow-sm sm:grid-cols-2 sm:p-6">
         <div className="space-y-3 sm:col-span-2">
@@ -615,11 +641,16 @@ function RestaurantFormFields({
             }
           >
             <option value="draft">Draft — only people with the link</option>
-            <option value="published">Published — ready for QR guests</option>
+            <option value="published" disabled={!publishAllowed}>
+              Published — ready for QR guests
+              {!publishAllowed ? " (awaiting approval)" : ""}
+            </option>
             <option value="archived">Archived — hidden</option>
           </select>
           <FieldHint>
-            Use Draft while building. Publish when the menu looks ready.
+            {publishAllowed
+              ? "Use Draft while building. Publish when the menu looks ready."
+              : "Please wait for team approval. Published is unavailable until then — keep working in Draft."}
           </FieldHint>
         </div>
       </div>

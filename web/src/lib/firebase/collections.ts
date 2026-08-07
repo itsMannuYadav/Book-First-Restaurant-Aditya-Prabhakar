@@ -10,4 +10,6 @@ export const COLLECTIONS = {
   orders: "orders",
   /** Server-only idempotency keys for guest order placement. */
   orderIdempotency: "orderIdempotency",
+  /** Server-only admin action trail (Admin SDK writes). */
+  adminAuditLogs: "adminAuditLogs",
 } as const;

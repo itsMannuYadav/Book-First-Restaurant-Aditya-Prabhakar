@@ -9,10 +9,13 @@ import { PageHeader } from "@/components/shared/page-header";
 import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
+import { canPublishRestaurant } from "@/lib/firebase/users";
 import { cn } from "@/lib/utils";
 
 export function QrCodePanel() {
+  const { profile } = useAuth();
   const { restaurant, loading } = useOwnerRestaurant();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -60,6 +63,11 @@ export function QrCodePanel() {
     );
   }
 
+  const publishAllowed = canPublishRestaurant({
+    accountStatus: profile?.accountStatus ?? "active",
+    approvalStatus: restaurant.approvalStatus,
+  });
+
   return (
     <div className="mx-auto max-w-xl">
       <PageHeader
@@ -68,7 +76,13 @@ export function QrCodePanel() {
         description="Guests scan this code to open your digital menu instantly."
       />
 
-      {restaurant.status !== "published" ? (
+      {!publishAllowed ? (
+        <p className="mt-6 rounded-2xl border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <strong>Waiting for approval.</strong> You can preview this QR, but
+          please wait until our team approves your account and you publish the
+          menu before printing or sharing it with guests.
+        </p>
+      ) : restaurant.status !== "published" ? (
         <p className="mt-6 rounded-2xl border border-[#14110e]/10 bg-white/70 px-4 py-3 text-sm text-[#7a7164]">
           Your menu is currently{" "}
           <strong className="text-[#14110e]">{restaurant.status}</strong>.

@@ -5,6 +5,7 @@ import {
   type App,
   type ServiceAccount,
 } from "firebase-admin/app";
+import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 function readServiceAccount(): ServiceAccount | null {
@@ -73,6 +74,10 @@ export function getAdminApp(): App {
 
 export function getAdminDb(): Firestore {
   return getFirestore(getAdminApp());
+}
+
+export function getAdminAuth(): Auth {
+  return getAuth(getAdminApp());
 }
 
 export function isAdminConfigured(): boolean {
