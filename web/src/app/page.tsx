@@ -85,6 +85,15 @@ export default function HomePage() {
             >
               View sample menu
             </Link>
+            <Link
+              href={ROUTES.ownerDemo}
+              className={cn(
+                buttonVariants({ size: "lg", variant: "outline" }),
+                "border-white/20 bg-transparent px-5 text-[#f4efe6] hover:bg-white/10",
+              )}
+            >
+              View sample dashboard
+            </Link>
           </div>
         </section>
 

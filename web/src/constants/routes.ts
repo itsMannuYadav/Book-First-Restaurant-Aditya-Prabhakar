@@ -11,6 +11,7 @@ export const ROUTES = {
   qr: "/qr",
   settings: "/settings",
   publicMenu: (slug: string) => `/m/${slug}`,
+  ownerDemo: "/owner-demo",
   admin: "/admin",
   adminApprovals: "/admin/approvals",
   adminOwners: "/admin/owners",
