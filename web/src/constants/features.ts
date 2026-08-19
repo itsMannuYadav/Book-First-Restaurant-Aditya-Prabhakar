@@ -1,6 +1,6 @@
 /**
- * Logo uploads need Firebase Storage (Blaze plan).
- * Set NEXT_PUBLIC_LOGO_UPLOADS_ENABLED=true after Storage is enabled.
+ * Logo uploads require Firebase Storage (Blaze plan) — now enabled.
+ * Controlled via NEXT_PUBLIC_LOGO_UPLOADS_ENABLED.
  */
 export const LOGO_UPLOADS_ENABLED =
   process.env.NEXT_PUBLIC_LOGO_UPLOADS_ENABLED === "true";
