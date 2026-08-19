@@ -1,4 +1,4 @@
-# BookFirst
+# DineFirst
 
 Premium digital menu SaaS for restaurants.
 

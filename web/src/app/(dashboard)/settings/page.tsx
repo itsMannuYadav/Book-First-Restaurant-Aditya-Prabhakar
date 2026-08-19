@@ -16,7 +16,7 @@ export default function SettingsPage() {
         Settings
       </h1>
       <p className="mt-2 text-muted-foreground">
-        Account details for your BookFirst workspace.
+        Account details for your DineFirst workspace.
       </p>
 
       <div className="mt-8 space-y-2 rounded-xl border border-border bg-card p-5">

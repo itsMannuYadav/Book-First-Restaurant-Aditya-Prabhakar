@@ -84,7 +84,7 @@ export function PublicMenuError({ message }: PublicMenuErrorProps) {
         href={ROUTES.home}
         className="text-sm font-medium text-[#14110e] underline-offset-4 hover:underline"
       >
-        Back to BookFirst
+        Back to DineFirst
       </Link>
     </div>
   );

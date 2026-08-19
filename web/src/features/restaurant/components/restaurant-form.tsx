@@ -374,7 +374,7 @@ function RestaurantFormFields({
         >
           <p className="font-semibold">Publishing is locked until approval</p>
           <p className="mt-1 text-amber-950/85">
-            Please wait for the Book First team to approve your account. You can
+            Please wait for the Dine First team to approve your account. You can
             save changes as <strong>Draft</strong> anytime — the Published
             option stays disabled until you’re approved.
           </p>

@@ -46,7 +46,7 @@ export function PendingApprovalBanner({
         </p>
         <p className="mt-1 text-amber-950/85">
           {rejected
-            ? "Please contact the Book First team. Publishing stays locked until you’re approved."
+            ? "Please contact the Dine First team. Publishing stays locked until you’re approved."
             : "You can build your menu as a draft. Publishing (and live QR guest ordering) unlocks after our team approves your account."}
         </p>
       </div>

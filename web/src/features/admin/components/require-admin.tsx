@@ -40,7 +40,7 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
             Not authorized
           </h1>
           <p className="mt-3 text-sm text-[#7a7164]">
-            This console is only for the Book First team. Your account is not on
+            This console is only for the Dine First team. Your account is not on
             the admin allowlist.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">

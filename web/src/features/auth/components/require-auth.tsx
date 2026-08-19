@@ -48,7 +48,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
           </h1>
           <p className="mt-3 text-sm text-[#7a7164]">
             {profile.suspendReason?.trim() ||
-              "Your owner account has been temporarily suspended. Contact the Book First team for help."}
+              "Your owner account has been temporarily suspended. Contact the Dine First team for help."}
           </p>
           <button
             type="button"
