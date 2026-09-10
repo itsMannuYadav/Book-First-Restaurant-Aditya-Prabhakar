@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
+import { ROUTES } from "@/constants/routes";
+import { PRESET_LABELS } from "@/constants/modules";
 import { cn } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -82,12 +85,15 @@ export default function AdminOwnersPage() {
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium text-[#14110e]">
+                  <Link
+                    href={ROUTES.adminOwner(owner.uid)}
+                    className="font-medium text-[#14110e] underline underline-offset-2"
+                  >
                     {owner.displayName || "Owner"}
-                  </p>
+                  </Link>
                   <p className="text-sm text-[#7a7164]">{owner.email}</p>
                   <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#8a8173]">
-                    {owner.accountStatus}
+                    {owner.accountStatus} · {PRESET_LABELS[owner.modulePreset]}
                   </p>
                   {owner.suspendReason ? (
                     <p className="mt-1 text-xs text-destructive">

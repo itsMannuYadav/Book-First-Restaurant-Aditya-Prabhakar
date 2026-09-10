@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ClipboardList,
+  Receipt,
   Store,
   Layers3,
   UtensilsCrossed,
@@ -22,17 +23,24 @@ import { buttonVariants } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { PendingApprovalBanner } from "@/features/auth/components/pending-approval-banner";
+import type { ModuleKey } from "@/types";
 
-const NAV = [
+const NAV: ReadonlyArray<{
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  module?: ModuleKey;
+}> = [
   { href: ROUTES.dashboard, label: "Dashboard", icon: LayoutDashboard },
-  { href: ROUTES.orders, label: "Orders", icon: ClipboardList },
-  { href: ROUTES.restaurant, label: "Restaurant", icon: Store },
-  { href: ROUTES.categories, label: "Categories", icon: Layers3 },
-  { href: ROUTES.menuItems, label: "Menu Items", icon: UtensilsCrossed },
-  { href: ROUTES.themes, label: "Themes", icon: Palette },
-  { href: ROUTES.qr, label: "QR Code", icon: QrCode },
+  { href: ROUTES.orders, label: "Orders", icon: ClipboardList, module: "orders" },
+  { href: ROUTES.billing, label: "Billing", icon: Receipt, module: "billing" },
+  { href: ROUTES.restaurant, label: "Restaurant", icon: Store, module: "menu" },
+  { href: ROUTES.categories, label: "Categories", icon: Layers3, module: "menu" },
+  { href: ROUTES.menuItems, label: "Menu Items", icon: UtensilsCrossed, module: "menu" },
+  { href: ROUTES.themes, label: "Themes", icon: Palette, module: "menu" },
+  { href: ROUTES.qr, label: "QR Code", icon: QrCode, module: "menu" },
   { href: ROUTES.settings, label: "Settings", icon: Settings },
-] as const;
+];
 
 function NavLinks({
   onNavigate,
@@ -42,10 +50,12 @@ function NavLinks({
   compact?: boolean;
 }) {
   const pathname = usePathname();
+  const { hasModule } = useAuth();
+  const items = NAV.filter((item) => !item.module || hasModule(item.module));
 
   return (
     <nav className="flex flex-col gap-1" aria-label="Dashboard">
-      {NAV.map((item) => {
+      {items.map((item) => {
         const active = pathname === item.href;
         const Icon = item.icon;
         return (
@@ -77,12 +87,18 @@ function NavLinks({
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleSignOut() {
     await signOut();
     router.replace(ROUTES.login);
+  }
+
+  // Print routes render bare — no sidebar, header, or page padding.
+  if (pathname.endsWith("/print")) {
+    return <>{children}</>;
   }
 
   return (

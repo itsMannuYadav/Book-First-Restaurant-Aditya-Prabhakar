@@ -31,6 +31,16 @@ export const restaurantSchema = z.object({
   phone: z.string().optional(),
   timing: z.string().optional(),
   currency: z.string().min(1, "Currency is required (example: ₹)"),
+  gstin: z
+    .string()
+    .trim()
+    .max(20, "GSTIN looks too long")
+    .optional(),
+  taxRate: z.coerce
+    .number()
+    .min(0, "Tax rate can’t be negative")
+    .max(50, "Tax rate must be 50% or less")
+    .optional(),
   theme: z.enum(["dark", "rustic", "minimal", "savan"]),
   status: z.enum(["draft", "published", "archived"]),
   location: z

@@ -28,8 +28,14 @@ export interface Restaurant {
   phone?: string;
   timing?: string;
   currency: string;
+  /** GSTIN printed on bills / invoices. */
+  gstin?: string;
+  /** Combined GST rate (percent) prefilled on new bills. */
+  taxRate?: number;
   theme: MenuThemeId;
   status: RestaurantStatus;
+  /** Mirror of the owner's `menu` module — gates the public /m page. */
+  menuPublicEnabled?: boolean;
   /** Team approval before the venue may go published. */
   approvalStatus: RestaurantApprovalStatus;
   /** Venue pin — required before dine-in ordering can be enabled. */

@@ -2,17 +2,29 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { requireFirebase } from "@/lib/firebase/require";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { nowIso } from "@/lib/utils/string";
-import type { AccountStatus, UserProfile, UserRole } from "@/types";
+import { DEFAULT_MODULES, DEFAULT_PRESET, detectPreset, normalizeModules } from "@/constants/modules";
+import type { AccountStatus, OwnerModules, UserProfile, UserRole } from "@/types";
 
 function mapUser(id: string, data: Record<string, unknown>): UserProfile {
   const accountStatus = (data.accountStatus as AccountStatus | undefined) ?? "active";
   const role = (data.role as UserRole | undefined) ?? "owner";
+  const modules = normalizeModules(
+    data.modules as Partial<OwnerModules> | undefined,
+  );
   return {
     uid: String(data.uid ?? id),
     email: String(data.email ?? ""),
     displayName: String(data.displayName ?? ""),
     role,
     accountStatus,
+    modules,
+    modulePreset: detectPreset(modules),
+    modulesUpdatedAt: data.modulesUpdatedAt
+      ? String(data.modulesUpdatedAt)
+      : undefined,
+    modulesUpdatedBy: data.modulesUpdatedBy
+      ? String(data.modulesUpdatedBy)
+      : undefined,
     approvedAt: data.approvedAt ? String(data.approvedAt) : undefined,
     approvedBy: data.approvedBy ? String(data.approvedBy) : undefined,
     suspendedAt: data.suspendedAt ? String(data.suspendedAt) : undefined,
@@ -50,6 +62,9 @@ export async function ensureUserProfile(input: {
       accountStatus: input.accountStatus,
       createdAt: timestamp,
       updatedAt: timestamp,
+      ...(input.role === "owner"
+        ? { modules: DEFAULT_MODULES, modulePreset: DEFAULT_PRESET }
+        : {}),
       ...(input.accountStatus === "active"
         ? { approvedAt: timestamp, approvedBy: "system" }
         : {}),

@@ -16,6 +16,20 @@ service cloud.firestore {
           == request.auth.uid;
     }
 
+    // Module access: prefer the custom claim, fall back to the user doc for
+    // sessions whose token predates an entitlement change.
+    function moduleFromToken(mod) {
+      return request.auth.token.get('modules', {}).get(mod, false) == true;
+    }
+    function moduleFromDoc(mod) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid))
+             .data.get('modules', {}).get(mod, false) == true;
+    }
+    function hasModule(mod) {
+      return isSignedIn() && (moduleFromToken(mod) || moduleFromDoc(mod));
+    }
+
     function validOrderStatus(status) {
       return status in [
         'pending', 'confirmed', 'declined', 'ready', 'completed', 'cancelled'
@@ -31,7 +45,25 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, create, update: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Self-serve create may only ship the default (billing-off) module set.
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && (
+          !('modules' in request.resource.data)
+          || request.resource.data.modules
+             == {'menu': true, 'orders': true, 'billing': false}
+        );
+
+      // Owners may edit their profile but never their own entitlements —
+      // module changes come only from the admin (Admin SDK bypasses rules).
+      allow update: if isSignedIn() && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny([
+               'modules', 'modulePreset',
+               'modulesUpdatedAt', 'modulesUpdatedBy',
+             ]);
+
       allow delete: if false;
     }
 
@@ -82,6 +114,45 @@ service cloud.firestore {
         // Only status workflow fields may change (plus optional owner note)
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['status', 'ownerNote', 'updatedAt', 'statusHistory']);
+    }
+
+    // Bills / invoices. Draft lifecycle is client-writable by the owning
+    // owner; finalize / paid / void run through the Admin SDK (API routes).
+    match /bills/{billId} {
+      allow read: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && hasModule('billing');
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && ownsRestaurant(request.resource.data.restaurantId)
+        && hasModule('billing')
+        && request.resource.data.status == 'draft'
+        && request.resource.data.billNumber == null;
+
+      allow update: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && hasModule('billing')
+        && resource.data.status == 'draft'
+        && request.resource.data.status == 'draft'
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.restaurantId == resource.data.restaurantId
+        && request.resource.data.billNumber == null;
+
+      allow delete: if isSignedIn()
+        && resource.data.ownerId == request.auth.uid
+        && resource.data.status == 'draft'
+        && hasModule('billing');
+    }
+
+    // Bill number sequence — Admin SDK only.
+    match /billCounters/{restaurantId} {
+      allow read, write: if false;
+    }
+
+    // Bill action trail — Admin SDK only.
+    match /billAuditLogs/{logId} {
+      allow read, write: if false;
     }
 
     // Idempotency ledger — Admin SDK only.

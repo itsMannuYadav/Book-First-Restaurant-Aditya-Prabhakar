@@ -10,6 +10,10 @@ export async function getPublicMenuBySlug(
   const restaurant = await getRestaurantBySlug(slugify(slug) || slug);
   if (!restaurant) return null;
   if (restaurant.status === "archived") return null;
+  // Owners without the `menu` module have no public page. This mirrors the
+  // owner's `modules.menu` onto the (publicly readable) restaurant doc; it is
+  // kept in sync by the admin cascade and on every owner sign-in.
+  if (restaurant.menuPublicEnabled === false) return null;
 
   let categories: Category[] = [];
   let items: MenuItemRecord[] = [];

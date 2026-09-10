@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { onIdTokenChanged, type User } from "firebase/auth";
 import { isAdminEmail } from "@/lib/admin/emails";
 import { auth, isFirebaseConfigured } from "@/lib/firebase/client";
 import {
@@ -17,9 +17,11 @@ import {
   signOutOwner,
   signUpOwner,
 } from "@/lib/firebase/auth";
+import { clearSessionCookie, syncSessionCookie } from "@/lib/firebase/session";
 import { getUserProfile } from "@/lib/firebase/users";
+import { DEFAULT_MODULES, moduleHome } from "@/constants/modules";
 import type { LoginInput, SignupInput } from "@/lib/validators/forms";
-import type { UserProfile } from "@/types";
+import type { ModuleKey, OwnerModules, UserProfile } from "@/types";
 
 type AuthContextValue = {
   user: User | null;
@@ -27,6 +29,11 @@ type AuthContextValue = {
   loading: boolean;
   configured: boolean;
   isAdmin: boolean;
+  /** Owner module access (defaults to `core` until the profile loads). */
+  modules: OwnerModules;
+  hasModule: (key: ModuleKey) => boolean;
+  /** Route this owner should land on ( `/billing` for billing-only ). */
+  homePath: string;
   refreshProfile: () => Promise<void>;
   signIn: (input: LoginInput) => Promise<void>;
   signUp: (input: SignupInput) => Promise<void>;
@@ -61,9 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+    const unsubscribe = onIdTokenChanged(auth, (nextUser) => {
       setUser(nextUser);
       setLoading(false);
+      // Keep the server-readable session cookie in step for `proxy.ts`.
+      if (nextUser) void syncSessionCookie(nextUser);
+      else void clearSessionCookie();
     });
 
     return unsubscribe;
@@ -98,6 +108,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin =
     Boolean(profile?.role === "admin") || isAdminEmail(user?.email);
 
+  const modules = profile?.modules ?? DEFAULT_MODULES;
+  const hasModule = useCallback(
+    (key: ModuleKey) => modules[key] === true,
+    [modules],
+  );
+  const homePath = useMemo(() => moduleHome(modules), [modules]);
+
   const value = useMemo(
     () => ({
       user,
@@ -105,6 +122,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       configured,
       isAdmin,
+      modules,
+      hasModule,
+      homePath,
       refreshProfile,
       signIn,
       signUp,
@@ -117,6 +137,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       configured,
       isAdmin,
+      modules,
+      hasModule,
+      homePath,
       refreshProfile,
       signIn,
       signUp,

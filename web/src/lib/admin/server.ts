@@ -1,11 +1,18 @@
 import type { DocumentData } from "firebase-admin/firestore";
 import { COLLECTIONS } from "@/lib/firebase/collections";
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { nowIso } from "@/lib/utils/string";
+import {
+  detectPreset,
+  normalizeModules,
+  resolveModules,
+} from "@/constants/modules";
 import type {
   AccountStatus,
   Category,
   MenuItemRecord,
+  ModulePreset,
+  OwnerModules,
   Restaurant,
   RestaurantApprovalStatus,
   RestaurantStatus,
@@ -15,12 +22,23 @@ import type {
 import type { MenuThemeId } from "@/types";
 
 function mapUser(id: string, data: DocumentData): UserProfile {
+  const modules = normalizeModules(
+    data.modules as Partial<OwnerModules> | undefined,
+  );
   return {
     uid: String(data.uid ?? id),
     email: String(data.email ?? ""),
     displayName: String(data.displayName ?? ""),
     role: (data.role as UserRole | undefined) ?? "owner",
     accountStatus: (data.accountStatus as AccountStatus | undefined) ?? "active",
+    modules,
+    modulePreset: detectPreset(modules),
+    modulesUpdatedAt: data.modulesUpdatedAt
+      ? String(data.modulesUpdatedAt)
+      : undefined,
+    modulesUpdatedBy: data.modulesUpdatedBy
+      ? String(data.modulesUpdatedBy)
+      : undefined,
     approvedAt: data.approvedAt ? String(data.approvedAt) : undefined,
     approvedBy: data.approvedBy ? String(data.approvedBy) : undefined,
     suspendedAt: data.suspendedAt ? String(data.suspendedAt) : undefined,
@@ -70,8 +88,14 @@ function mapRestaurant(id: string, data: DocumentData): Restaurant {
     phone: data.phone ? String(data.phone) : undefined,
     timing: data.timing ? String(data.timing) : undefined,
     currency: String(data.currency ?? "₹"),
+    gstin: data.gstin ? String(data.gstin) : undefined,
+    taxRate:
+      typeof data.taxRate === "number" && Number.isFinite(data.taxRate)
+        ? data.taxRate
+        : undefined,
     theme: (data.theme as MenuThemeId) ?? "dark",
     status: (data.status as RestaurantStatus) ?? "draft",
+    menuPublicEnabled: data.menuPublicEnabled !== false,
     approvalStatus:
       (data.approvalStatus as RestaurantApprovalStatus | undefined) ??
       "approved",
@@ -134,11 +158,71 @@ export async function adminListPendingOwners(): Promise<UserProfile[]> {
   return owners.filter((o) => o.accountStatus === "pending");
 }
 
+export async function adminGetOwnerDetail(uid: string): Promise<{
+  owner: UserProfile;
+  restaurants: Array<Pick<Restaurant, "id" | "name" | "slug" | "status" | "approvalStatus">>;
+} | null> {
+  const db = getAdminDb();
+  const snap = await db.collection(COLLECTIONS.users).doc(uid).get();
+  if (!snap.exists) return null;
+
+  const restaurantsSnap = await db
+    .collection(COLLECTIONS.restaurants)
+    .where("ownerId", "==", uid)
+    .get();
+
+  return {
+    owner: mapUser(snap.id, snap.data() ?? {}),
+    restaurants: restaurantsSnap.docs.map((d) => {
+      const r = mapRestaurant(d.id, d.data());
+      return {
+        id: r.id,
+        name: r.name,
+        slug: r.slug,
+        status: r.status,
+        approvalStatus: r.approvalStatus,
+      };
+    }),
+  };
+}
+
+/** Mirror a user's module access into their Firebase custom claims + restaurants. */
+async function syncOwnerModules(
+  uid: string,
+  modules: OwnerModules,
+  preset: ModulePreset,
+  timestamp: string,
+): Promise<void> {
+  try {
+    await getAdminAuth().setCustomUserClaims(uid, { modules, preset });
+  } catch (err) {
+    // Firestore stays the source of truth; rules fall back to a user-doc read.
+    console.error("[admin] setCustomUserClaims failed", err);
+  }
+
+  const db = getAdminDb();
+  const restaurants = await db
+    .collection(COLLECTIONS.restaurants)
+    .where("ownerId", "==", uid)
+    .get();
+  if (restaurants.empty) return;
+  const batch = db.batch();
+  for (const doc of restaurants.docs) {
+    batch.update(doc.ref, {
+      menuPublicEnabled: modules.menu,
+      updatedAt: timestamp,
+    });
+  }
+  await batch.commit();
+}
+
 export async function adminPatchOwner(
   uid: string,
   patch: {
     accountStatus?: AccountStatus;
     suspendReason?: string;
+    preset?: ModulePreset;
+    modules?: Partial<OwnerModules>;
     actorEmail: string;
   },
 ): Promise<UserProfile> {
@@ -147,10 +231,25 @@ export async function adminPatchOwner(
   const snap = await ref.get();
   if (!snap.exists) throw new Error("Owner not found.");
 
+  const current = snap.data() ?? {};
   const timestamp = nowIso();
   const next: Record<string, unknown> = {
     updatedAt: timestamp,
   };
+
+  const wantsModuleChange =
+    patch.preset !== undefined || patch.modules !== undefined;
+  const effectiveModules = wantsModuleChange
+    ? resolveModules({ preset: patch.preset, modules: patch.modules })
+    : normalizeModules(current.modules as Partial<OwnerModules> | undefined);
+  const effectivePreset = detectPreset(effectiveModules);
+
+  if (wantsModuleChange) {
+    next.modules = effectiveModules;
+    next.modulePreset = effectivePreset;
+    next.modulesUpdatedAt = timestamp;
+    next.modulesUpdatedBy = patch.actorEmail;
+  }
 
   if (patch.accountStatus) {
     next.accountStatus = patch.accountStatus;
@@ -205,6 +304,12 @@ export async function adminPatchOwner(
       });
     }
     if (!restaurants.empty) await batch.commit();
+  }
+
+  // Push entitlements into custom claims + restaurant mirror whenever they
+  // change, or on first approval so `proxy.ts` has something to read.
+  if (wantsModuleChange || patch.accountStatus === "active") {
+    await syncOwnerModules(uid, effectiveModules, effectivePreset, timestamp);
   }
 
   const updated = await ref.get();

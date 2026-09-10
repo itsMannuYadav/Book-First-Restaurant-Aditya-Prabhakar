@@ -15,7 +15,7 @@ import type { MenuThemeId } from "@/types";
 import type { RestaurantInput } from "@/lib/validators/forms";
 
 export function useOwnerRestaurant() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, hasModule } = useAuth();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +36,7 @@ export function useOwnerRestaurant() {
           ownerId: user.uid,
           name: user.displayName || "My Restaurant",
           approvalStatus: "pending",
+          menuPublicEnabled: hasModule("menu"),
         });
       } else {
         next = await normalizeRestaurantSlug(next);
@@ -46,7 +47,7 @@ export function useOwnerRestaurant() {
     } finally {
       setLoading(false);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, hasModule]);
 
   useEffect(() => {
     void refresh();

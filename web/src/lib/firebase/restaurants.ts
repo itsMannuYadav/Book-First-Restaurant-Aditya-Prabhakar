@@ -15,6 +15,7 @@ import { nowIso, slugify, uniqueSlug } from "@/lib/utils/string";
 import { formatHours, DEFAULT_HOURS } from "@/lib/utils/hours";
 import { seedStarterMenu } from "@/lib/firebase/seed-menu";
 import { DEFAULT_ORDER_GEO_RADIUS_METERS } from "@/constants/orders";
+import { DEFAULT_TAX_RATE } from "@/constants/billing";
 import type {
   Restaurant,
   RestaurantApprovalStatus,
@@ -29,6 +30,8 @@ type CreateRestaurantInput = {
   ownerId: string;
   name: string;
   approvalStatus?: RestaurantApprovalStatus;
+  /** Mirror of the owner's `menu` module. Defaults to enabled. */
+  menuPublicEnabled?: boolean;
 };
 
 function mapTables(raw: unknown): RestaurantTable[] {
@@ -72,8 +75,14 @@ function mapRestaurant(id: string, data: Record<string, unknown>): Restaurant {
     phone: data.phone ? String(data.phone) : undefined,
     timing: data.timing ? String(data.timing) : undefined,
     currency: String(data.currency ?? "₹"),
+    gstin: data.gstin ? String(data.gstin) : undefined,
+    taxRate:
+      typeof data.taxRate === "number" && Number.isFinite(data.taxRate)
+        ? data.taxRate
+        : undefined,
     theme: (data.theme as MenuThemeId) ?? "dark",
     status: (data.status as RestaurantStatus) ?? "draft",
+    menuPublicEnabled: data.menuPublicEnabled !== false,
     // Legacy restaurants without the field stay operable.
     approvalStatus:
       (data.approvalStatus as RestaurantApprovalStatus | undefined) ??
@@ -143,8 +152,11 @@ export async function createRestaurant(
     phone: "+91 98765 43210",
     timing: formatHours(DEFAULT_HOURS),
     currency: "₹",
+    gstin: "",
+    taxRate: DEFAULT_TAX_RATE,
     theme: "rustic" as MenuThemeId,
     status: "draft" as RestaurantStatus,
+    menuPublicEnabled: input.menuPublicEnabled ?? true,
     approvalStatus: (input.approvalStatus ?? "pending") as RestaurantApprovalStatus,
     location: null,
     orderGeoRadiusMeters: DEFAULT_ORDER_GEO_RADIUS_METERS,
@@ -303,6 +315,11 @@ export async function updateRestaurant(
     phone: input.phone?.trim() ?? "",
     timing: input.timing?.trim() ?? "",
     currency: input.currency.trim() || "₹",
+    gstin: input.gstin?.trim().toUpperCase() ?? "",
+    taxRate:
+      typeof input.taxRate === "number" && Number.isFinite(input.taxRate)
+        ? input.taxRate
+        : DEFAULT_TAX_RATE,
     theme: input.theme,
     status: input.status,
     location: input.location ?? null,
@@ -332,6 +349,22 @@ export async function updateRestaurantLogo(
   const { db } = requireFirebase();
   await updateDoc(doc(db, COLLECTIONS.restaurants, id), {
     logoUrl: logoUrl.trim(),
+    updatedAt: nowIso(),
+  });
+}
+
+/**
+ * Keeps the public-page gate on the restaurant doc in step with the owner's
+ * `menu` module. No-op when already correct.
+ */
+export async function syncMenuPublicFlag(
+  restaurant: Restaurant,
+  menuEnabled: boolean,
+): Promise<void> {
+  if (restaurant.menuPublicEnabled === menuEnabled) return;
+  const { db } = requireFirebase();
+  await updateDoc(doc(db, COLLECTIONS.restaurants, restaurant.id), {
+    menuPublicEnabled: menuEnabled,
     updatedAt: nowIso(),
   });
 }

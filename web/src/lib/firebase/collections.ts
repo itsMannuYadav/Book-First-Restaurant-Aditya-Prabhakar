@@ -12,4 +12,10 @@ export const COLLECTIONS = {
   orderIdempotency: "orderIdempotency",
   /** Server-only admin action trail (Admin SDK writes). */
   adminAuditLogs: "adminAuditLogs",
+  /** Owner bills / invoices. */
+  bills: "bills",
+  /** Server-only per-restaurant bill number sequence (Admin SDK writes). */
+  billCounters: "billCounters",
+  /** Server-only bill action trail (finalize / paid / void). */
+  billAuditLogs: "billAuditLogs",
 } as const;

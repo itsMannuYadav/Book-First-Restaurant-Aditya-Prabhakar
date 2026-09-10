@@ -6,13 +6,21 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
+import { PRESET_LABELS } from "@/constants/modules";
 import { cn } from "@/lib/utils";
-import type { UserProfile } from "@/types";
+import type { ModulePreset, UserProfile } from "@/types";
+
+const APPROVE_PRESETS: Array<Exclude<ModulePreset, "custom">> = [
+  "core",
+  "billing_only",
+  "full",
+];
 
 export default function AdminApprovalsPage() {
   const [owners, setOwners] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [presetByUid, setPresetByUid] = useState<Record<string, ModulePreset>>({});
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -40,7 +48,12 @@ export default function AdminApprovalsPage() {
     try {
       await adminFetch(`/api/admin/owners/${uid}`, {
         method: "PATCH",
-        body: JSON.stringify({ accountStatus }),
+        body: JSON.stringify({
+          accountStatus,
+          ...(accountStatus === "active"
+            ? { preset: presetByUid[uid] ?? "core" }
+            : {}),
+        }),
       });
       toast.success(
         accountStatus === "active" ? "Owner approved" : "Marked pending",
@@ -82,7 +95,24 @@ export default function AdminApprovalsPage() {
                 <p className="font-medium text-[#14110e]">{owner.displayName}</p>
                 <p className="text-sm text-[#7a7164]">{owner.email}</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  aria-label="Module access"
+                  className="h-8 rounded-lg border border-[#14110e]/15 bg-white px-2 text-xs text-[#5c554a]"
+                  value={presetByUid[owner.uid] ?? "core"}
+                  onChange={(e) =>
+                    setPresetByUid((prev) => ({
+                      ...prev,
+                      [owner.uid]: e.target.value as ModulePreset,
+                    }))
+                  }
+                >
+                  {APPROVE_PRESETS.map((name) => (
+                    <option key={name} value={name}>
+                      {PRESET_LABELS[name]}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   disabled={pendingId === owner.uid}

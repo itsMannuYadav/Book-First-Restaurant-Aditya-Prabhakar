@@ -23,6 +23,7 @@ import { restaurantSchema } from "@/lib/validators/forms";
 import type { RestaurantInput } from "@/lib/validators/forms";
 import { slugify } from "@/lib/utils/string";
 import { formatHours, DEFAULT_HOURS } from "@/lib/utils/hours";
+import { DEFAULT_TAX_RATE } from "@/constants/billing";
 import { cn } from "@/lib/utils";
 import {
   LOGO_UPLOADS_ENABLED,
@@ -43,6 +44,8 @@ type FormState = {
   phone: string;
   timing: string;
   currency: string;
+  gstin: string;
+  taxRate: string;
   theme: MenuThemeId;
   status: RestaurantStatus;
   lat: string;
@@ -81,6 +84,8 @@ function restaurantToForm(restaurant: Restaurant): FormState {
     phone: restaurant.phone || "+91 98765 43210",
     timing: restaurant.timing || formatHours(DEFAULT_HOURS),
     currency: restaurant.currency || "₹",
+    gstin: restaurant.gstin || "",
+    taxRate: String(restaurant.taxRate ?? DEFAULT_TAX_RATE),
     theme: restaurant.theme,
     status: restaurant.status,
     lat: restaurant.location ? String(restaurant.location.lat) : "",
@@ -303,6 +308,8 @@ function RestaurantFormFields({
       phone: form.phone.trim(),
       timing: form.timing.trim(),
       currency: form.currency.trim() || "₹",
+      gstin: form.gstin.trim().toUpperCase(),
+      taxRate: Number(form.taxRate) || DEFAULT_TAX_RATE,
       theme: form.theme,
       status: publishAllowed ? form.status : form.status === "published" ? "draft" : form.status,
       location,
@@ -344,6 +351,8 @@ function RestaurantFormFields({
       setForm((prev) => ({
         ...prev,
         ...parsed.data,
+        gstin: parsed.data.gstin ?? "",
+        taxRate: String(parsed.data.taxRate ?? DEFAULT_TAX_RATE),
         lat: parsed.data.location ? String(parsed.data.location.lat) : "",
         lng: parsed.data.location ? String(parsed.data.location.lng) : "",
         orderGeoRadiusMeters: String(parsed.data.orderGeoRadiusMeters),
@@ -591,6 +600,38 @@ function RestaurantFormFields({
             }
           />
           <FieldHint>Used next to prices on the menu.</FieldHint>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="taxRate">GST rate (%)</Label>
+          <Input
+            id="taxRate"
+            type="number"
+            inputMode="decimal"
+            min={0}
+            step="0.01"
+            placeholder="5"
+            value={form.taxRate}
+            aria-invalid={Boolean(fieldErrors.taxRate)}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, taxRate: e.target.value }))
+            }
+          />
+          <FieldHint>Prefilled on new bills, shown as CGST + SGST halves.</FieldHint>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="gstin">GSTIN</Label>
+          <Input
+            id="gstin"
+            placeholder="22AAAAA0000A1Z5"
+            value={form.gstin}
+            aria-invalid={Boolean(fieldErrors.gstin)}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, gstin: e.target.value }))
+            }
+          />
+          <FieldHint>Printed on invoices. Leave blank if not registered.</FieldHint>
         </div>
 
         <div className="space-y-2 sm:col-span-2">

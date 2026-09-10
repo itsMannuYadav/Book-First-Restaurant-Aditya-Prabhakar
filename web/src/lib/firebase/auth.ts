@@ -12,6 +12,7 @@ import { requireFirebase } from "@/lib/firebase/require";
 import {
   createRestaurant,
   getRestaurantByOwnerId,
+  syncMenuPublicFlag,
 } from "@/lib/firebase/restaurants";
 import { seedStarterMenu } from "@/lib/firebase/seed-menu";
 import { ensureUserProfile, getUserProfile } from "@/lib/firebase/users";
@@ -47,14 +48,25 @@ async function ensureOwnerWorkspace(user: User, restaurantName?: string) {
     accountStatus: isBrandNew ? "pending" : "active",
   });
 
+  // Brand-new owners are `core` (menu on); otherwise follow the stored module.
+  const menuEnabled = existingProfile
+    ? existingProfile.modules.menu !== false
+    : true;
+
   let restaurant = await getRestaurantByOwnerId(user.uid);
   if (!restaurant) {
     restaurant = await createRestaurant({
       ownerId: user.uid,
       name: displayName,
       approvalStatus: isBrandNew ? "pending" : "approved",
+      menuPublicEnabled: menuEnabled,
     });
   } else {
+    try {
+      await syncMenuPublicFlag(restaurant, menuEnabled);
+    } catch {
+      // Best-effort — the admin cascade also keeps this in sync.
+    }
     try {
       await seedStarterMenu(restaurant.id);
     } catch {
