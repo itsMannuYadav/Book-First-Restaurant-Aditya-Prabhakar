@@ -33,6 +33,14 @@ export const PRESET_LABELS: Record<ModulePreset, string> = {
   custom: "Custom",
 };
 
+/** Compact labels for tight spots (table cells, chips). */
+export const PRESET_SHORT: Record<ModulePreset, string> = {
+  core: "Core",
+  billing_only: "Billing",
+  full: "Full",
+  custom: "Custom",
+};
+
 /** Sensible default for new signups and legacy owners with no `modules` field. */
 export const DEFAULT_MODULES: OwnerModules = MODULE_PRESETS.core;
 export const DEFAULT_PRESET: ModulePreset = "core";

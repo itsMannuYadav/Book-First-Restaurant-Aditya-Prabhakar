@@ -6,6 +6,7 @@ import {
   MODULE_LABELS,
   MODULE_PRESETS,
   PRESET_LABELS,
+  PRESET_SHORT,
   detectPreset,
 } from "@/constants/modules";
 import { cn } from "@/lib/utils";
@@ -36,8 +37,8 @@ export function PresetPicker({
     <div className={compact ? "space-y-1.5" : "space-y-3"}>
       <div
         className={cn(
-          "inline-flex flex-wrap gap-1 rounded-xl bg-[#14110e]/5 p-1",
-          compact && "gap-0.5",
+          "inline-flex rounded-xl bg-[#14110e]/5",
+          compact ? "flex-nowrap gap-0.5 p-0.5" : "flex-wrap gap-1 p-1",
         )}
       >
         {PRESET_CHOICES.map((name) => {
@@ -49,22 +50,22 @@ export function PresetPicker({
               disabled={disabled}
               onClick={() => onChange({ ...MODULE_PRESETS[name] })}
               className={cn(
-                "rounded-lg font-medium transition-colors disabled:opacity-50",
-                compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
+                "rounded-lg font-medium whitespace-nowrap transition-colors disabled:opacity-50",
+                compact ? "px-2 py-0.5 text-[11px]" : "px-3 py-1.5 text-sm",
                 active
                   ? "bg-white text-[#14110e] shadow-sm"
                   : "text-[#7a7164] hover:text-[#14110e]",
               )}
             >
-              {PRESET_LABELS[name]}
+              {compact ? PRESET_SHORT[name] : PRESET_LABELS[name]}
             </button>
           );
         })}
         {preset === "custom" ? (
           <span
             className={cn(
-              "rounded-lg bg-white font-medium text-[#14110e] shadow-sm",
-              compact ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
+              "rounded-lg bg-white font-medium text-[#14110e] shadow-sm whitespace-nowrap",
+              compact ? "px-2 py-0.5 text-[11px]" : "px-3 py-1.5 text-sm",
             )}
           >
             Custom

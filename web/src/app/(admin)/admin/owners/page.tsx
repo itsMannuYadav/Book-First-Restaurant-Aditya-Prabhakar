@@ -11,7 +11,6 @@ import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
 import { ROUTES } from "@/constants/routes";
 import { PRESET_LABELS, detectPreset } from "@/constants/modules";
 import { cn } from "@/lib/utils";
-import { PlanBadge } from "@/components/shared/plan-badge";
 import { PresetPicker } from "@/features/admin/components/preset-picker";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type {
@@ -33,12 +32,6 @@ const PLAN_OPTIONS: PlanFilter[] = [
   "custom",
 ];
 
-function initialPlanFilter(): PlanFilter {
-  if (typeof window === "undefined") return "all";
-  const p = new URLSearchParams(window.location.search).get("plan");
-  return PLAN_OPTIONS.includes(p as PlanFilter) ? (p as PlanFilter) : "all";
-}
-
 function formatDate(iso: string): string {
   if (!iso) return "—";
   try {
@@ -57,7 +50,7 @@ export default function AdminOwnersPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [plan, setPlan] = useState<PlanFilter>(initialPlanFilter);
+  const [plan, setPlan] = useState<PlanFilter>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -87,6 +80,14 @@ export default function AdminOwnersPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on mount
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("plan");
+    if (p && PLAN_OPTIONS.includes(p as PlanFilter)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- seed filter from the deep link
+      setPlan(p as PlanFilter);
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -361,15 +362,17 @@ export default function AdminOwnersPage() {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <div className="space-y-1.5">
-                        <PlanBadge preset={owner.modulePreset} />
-                        <PresetPicker
-                          compact
-                          disabled={rowBusy}
-                          modules={owner.modules}
-                          onChange={(m) => onRowPlanChange(owner, m)}
-                        />
-                      </div>
+                      <PresetPicker
+                        compact
+                        disabled={rowBusy}
+                        modules={owner.modules}
+                        onChange={(m) => onRowPlanChange(owner, m)}
+                      />
+                      {owner.modulePreset === "custom" ? (
+                        <p className="mt-1 text-[11px] text-[#8a8173]">
+                          custom mix
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-3 py-3">
                       {owner.primaryRestaurant ? (

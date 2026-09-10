@@ -170,7 +170,18 @@ export function BillsList() {
 
       {error ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-          {error}
+          {/permission|insufficient/i.test(error) ? (
+            <>
+              <p className="font-medium">Billing isn’t fully switched on yet.</p>
+              <p className="mt-1 text-xs leading-relaxed opacity-90">
+                Your account has the Billing module, but access is still
+                propagating. Try signing out and back in. If it persists, the
+                team may need to publish the latest database rules.
+              </p>
+            </>
+          ) : (
+            error
+          )}
         </div>
       ) : null}
 

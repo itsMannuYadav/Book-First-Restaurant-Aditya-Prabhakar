@@ -119,8 +119,9 @@ service cloud.firestore {
     // Bills / invoices. Draft lifecycle is client-writable by the owning
     // owner; finalize / paid / void run through the Admin SDK (API routes).
     match /bills/{billId} {
-      allow read: if isSignedIn()
-        && resource.data.ownerId == request.auth.uid
+      // Gate on restaurantId (which owner queries constrain) — a rule that
+      // references an unconstrained field like ownerId makes list() fail.
+      allow read: if ownsRestaurant(resource.data.restaurantId)
         && hasModule('billing');
 
       allow create: if isSignedIn()
