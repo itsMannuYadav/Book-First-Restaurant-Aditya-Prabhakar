@@ -7,8 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
 import { ROUTES } from "@/constants/routes";
+import { PRESET_LABELS } from "@/constants/modules";
+import { PlanBadge } from "@/components/shared/plan-badge";
 import { cn } from "@/lib/utils";
-import type { Restaurant } from "@/types";
+import type { ModulePreset, Restaurant } from "@/types";
 
 type OverviewResponse = {
   pendingApprovals: number;
@@ -16,8 +18,12 @@ type OverviewResponse = {
   totalOwners: number;
   totalRestaurants: number;
   publishedRestaurants: number;
+  ownersByPreset: Record<Exclude<ModulePreset, "custom"> | "custom", number>;
+  billingOwners: number;
   recentRestaurants: Array<Restaurant & { ownerEmail?: string }>;
 };
+
+const PLAN_ORDER: ModulePreset[] = ["core", "billing_only", "full", "custom"];
 
 export default function AdminOverviewPage() {
   const [data, setData] = useState<OverviewResponse | null>(null);
@@ -110,6 +116,31 @@ export default function AdminOverviewPage() {
             </p>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-[#14110e]">Plans</h2>
+          <span className="text-xs text-[#8a8173]">
+            {data.billingOwners} owner{data.billingOwners === 1 ? "" : "s"} with
+            billing
+          </span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-4">
+          {PLAN_ORDER.map((preset) => (
+            <Link
+              key={preset}
+              href={`${ROUTES.adminOwners}?plan=${preset}`}
+              className="rounded-2xl border border-[#14110e]/8 bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <PlanBadge preset={preset} />
+              <p className="mt-2 font-[family-name:var(--font-serif-display)] text-2xl font-bold text-[#14110e]">
+                {data.ownersByPreset?.[preset] ?? 0}
+              </p>
+              <p className="text-xs text-[#8a8173]">{PRESET_LABELS[preset]}</p>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="mt-8">

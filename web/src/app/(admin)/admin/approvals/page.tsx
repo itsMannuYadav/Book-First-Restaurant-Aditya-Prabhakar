@@ -6,15 +6,20 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonVariants } from "@/components/ui/button";
 import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
-import { PRESET_LABELS } from "@/constants/modules";
+import {
+  MODULE_KEYS,
+  MODULE_LABELS,
+  MODULE_PRESETS,
+  detectPreset,
+} from "@/constants/modules";
+import { PresetPicker } from "@/features/admin/components/preset-picker";
 import { cn } from "@/lib/utils";
-import type { ModulePreset, UserProfile } from "@/types";
+import type { ModulePreset, OwnerModules, UserProfile } from "@/types";
 
-const APPROVE_PRESETS: Array<Exclude<ModulePreset, "custom">> = [
-  "core",
-  "billing_only",
-  "full",
-];
+function grantsCaption(modules: OwnerModules): string {
+  const on = MODULE_KEYS.filter((k) => modules[k]).map((k) => MODULE_LABELS[k]);
+  return on.length ? `Grants: ${on.join(", ")}` : "Grants nothing";
+}
 
 export default function AdminApprovalsPage() {
   const [owners, setOwners] = useState<UserProfile[]>([]);
@@ -43,26 +48,47 @@ export default function AdminApprovalsPage() {
     void refresh();
   }, [refresh]);
 
-  async function setStatus(uid: string, accountStatus: "active" | "pending") {
+  function modulesFor(uid: string): OwnerModules {
+    return MODULE_PRESETS[presetByUid[uid] === "billing_only"
+      ? "billing_only"
+      : presetByUid[uid] === "full"
+        ? "full"
+        : "core"];
+  }
+
+  async function approve(uid: string) {
     setPendingId(uid);
     try {
       await adminFetch(`/api/admin/owners/${uid}`, {
         method: "PATCH",
         body: JSON.stringify({
-          accountStatus,
-          ...(accountStatus === "active"
-            ? { preset: presetByUid[uid] ?? "core" }
-            : {}),
+          accountStatus: "active",
+          preset: presetByUid[uid] ?? "core",
         }),
       });
-      toast.success(
-        accountStatus === "active" ? "Owner approved" : "Marked pending",
-      );
+      toast.success("Owner approved");
       await refresh();
     } catch (err) {
-      toast.error(
-        err instanceof AdminApiError ? err.message : "Update failed",
-      );
+      toast.error(err instanceof AdminApiError ? err.message : "Update failed");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function reject(uid: string) {
+    setPendingId(uid);
+    try {
+      await adminFetch(`/api/admin/owners/${uid}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          accountStatus: "suspended",
+          suspendReason: "Application rejected by team",
+        }),
+      });
+      toast.success("Application rejected");
+      await refresh();
+    } catch (err) {
+      toast.error(err instanceof AdminApiError ? err.message : "Update failed");
     } finally {
       setPendingId(null);
     }
@@ -72,91 +98,82 @@ export default function AdminApprovalsPage() {
     <div>
       <PageHeader
         title="Approvals"
-        description="New owners stay in draft until you approve them."
+        description="New owners stay in draft until you approve them — pick their plan here."
       />
 
       {loading ? (
         <div className="mt-6 space-y-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
       ) : owners.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-[#14110e]/8 bg-white px-4 py-6 text-sm text-[#7a7164]">
           No pending approvals. Nice and clear.
         </p>
       ) : (
-        <ul className="mt-6 divide-y divide-[#14110e]/8 overflow-hidden rounded-2xl border border-[#14110e]/8 bg-white">
-          {owners.map((owner) => (
-            <li
-              key={owner.uid}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 py-4"
-            >
-              <div>
-                <p className="font-medium text-[#14110e]">{owner.displayName}</p>
-                <p className="text-sm text-[#7a7164]">{owner.email}</p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  aria-label="Module access"
-                  className="h-8 rounded-lg border border-[#14110e]/15 bg-white px-2 text-xs text-[#5c554a]"
-                  value={presetByUid[owner.uid] ?? "core"}
-                  onChange={(e) =>
-                    setPresetByUid((prev) => ({
-                      ...prev,
-                      [owner.uid]: e.target.value as ModulePreset,
-                    }))
-                  }
-                >
-                  {APPROVE_PRESETS.map((name) => (
-                    <option key={name} value={name}>
-                      {PRESET_LABELS[name]}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  disabled={pendingId === owner.uid}
-                  className={cn(buttonVariants({ size: "sm" }))}
-                  onClick={() => void setStatus(owner.uid, "active")}
-                >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  disabled={pendingId === owner.uid}
-                  className={cn(
-                    buttonVariants({ size: "sm", variant: "outline" }),
-                  )}
-                  onClick={() =>
-                    void (async () => {
-                      setPendingId(owner.uid);
-                      try {
-                        await adminFetch(`/api/admin/owners/${owner.uid}`, {
-                          method: "PATCH",
-                          body: JSON.stringify({
-                            accountStatus: "suspended",
-                            suspendReason: "Application rejected by team",
-                          }),
-                        });
-                        toast.success("Application rejected");
-                        await refresh();
-                      } catch (err) {
-                        toast.error(
-                          err instanceof AdminApiError
-                            ? err.message
-                            : "Update failed",
-                        );
-                      } finally {
-                        setPendingId(null);
+        <ul className="mt-6 space-y-3">
+          {owners.map((owner) => {
+            const modules = modulesFor(owner.uid);
+            const busy = pendingId === owner.uid;
+            return (
+              <li
+                key={owner.uid}
+                className="rounded-2xl border border-[#14110e]/8 bg-white p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-[#14110e]">
+                      {owner.displayName}
+                    </p>
+                    <p className="text-sm text-[#7a7164]">{owner.email}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className={cn(buttonVariants({ size: "sm" }))}
+                      onClick={() => void approve(owner.uid)}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      className={cn(
+                        buttonVariants({ size: "sm", variant: "outline" }),
+                        "border-destructive/30 text-destructive",
+                      )}
+                      onClick={() => void reject(owner.uid)}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-3 border-t border-[#14110e]/8 pt-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-[#8a8173]">
+                    Plan on approval
+                  </p>
+                  <div className="mt-1.5">
+                    <PresetPicker
+                      compact
+                      disabled={busy}
+                      modules={modules}
+                      onChange={(m) =>
+                        setPresetByUid((prev) => ({
+                          ...prev,
+                          [owner.uid]: detectPreset(m),
+                        }))
                       }
-                    })()
-                  }
-                >
-                  Reject
-                </button>
-              </div>
-            </li>
-          ))}
+                    />
+                  </div>
+                  <p className="mt-1.5 text-xs text-[#8a8173]">
+                    {grantsCaption(modules)}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

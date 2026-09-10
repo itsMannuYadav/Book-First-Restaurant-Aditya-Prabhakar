@@ -6,52 +6,73 @@ import {
   ClipboardList,
   Layers3,
   QrCode,
+  Receipt,
   Store,
   UtensilsCrossed,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlanBadge } from "@/components/shared/plan-badge";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useOwnerRestaurant } from "@/features/restaurant/hooks/use-owner-restaurant";
 import { cn } from "@/lib/utils";
+import type { ModuleKey } from "@/types";
 
-const actions = [
+const actions: Array<{
+  title: string;
+  body: string;
+  href: string;
+  icon: typeof ClipboardList;
+  module?: ModuleKey;
+}> = [
   {
     title: "Orders",
     body: "Confirm, decline, and complete dine-in tickets.",
     href: ROUTES.orders,
     icon: ClipboardList,
+    module: "orders",
+  },
+  {
+    title: "Billing",
+    body: "Raise and track customer invoices.",
+    href: ROUTES.billing,
+    icon: Receipt,
+    module: "billing",
   },
   {
     title: "Restaurant",
     body: "Name, hours, address, pin, and tables.",
     href: ROUTES.restaurant,
     icon: Store,
+    module: "menu",
   },
   {
     title: "Categories",
     body: "Sections guests scroll through.",
     href: ROUTES.categories,
     icon: Layers3,
+    module: "menu",
   },
   {
     title: "Menu Items",
     body: "Dishes, prices, tags, and badges.",
     href: ROUTES.menuItems,
     icon: UtensilsCrossed,
+    module: "menu",
   },
   {
     title: "QR Code",
     body: "Share the link guests scan.",
     href: ROUTES.qr,
     icon: QrCode,
+    module: "menu",
   },
-] as const;
+];
 
 export default function DashboardHomePage() {
   const { restaurant, loading } = useOwnerRestaurant();
-  const { profile } = useAuth();
+  const { profile, hasModule } = useAuth();
 
   if (loading) {
     return (
@@ -65,6 +86,9 @@ export default function DashboardHomePage() {
       </div>
     );
   }
+
+  const visibleActions = actions.filter((a) => !a.module || hasModule(a.module));
+  const showMenu = hasModule("menu");
 
   const statusLabel =
     restaurant?.status === "published"
@@ -91,25 +115,39 @@ export default function DashboardHomePage() {
           <p className="mt-2 text-[#7a7164]">
             {awaitingApproval
               ? "Build your menu while you wait — publishing unlocks after team approval."
-              : "Keep your digital menu polished and ready to share."}
+              : showMenu
+                ? "Keep your digital menu polished and ready to share."
+                : "Raise and track customer bills from here."}
           </p>
         </div>
-        <div className="rounded-full border border-[#14110e]/10 bg-white px-3 py-1.5 text-sm text-[#5c554a]">
-          {awaitingApproval ? (
-            <>
-              Approval ·{" "}
-              <span className="font-semibold text-amber-800">Pending</span>
-            </>
-          ) : (
-            <>
-              Status ·{" "}
-              <span className="font-semibold text-[#14110e]">{statusLabel}</span>
-            </>
-          )}
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="rounded-full border border-[#14110e]/10 bg-white px-3 py-1.5 text-sm text-[#5c554a]">
+            {awaitingApproval ? (
+              <>
+                Approval ·{" "}
+                <span className="font-semibold text-amber-800">Pending</span>
+              </>
+            ) : (
+              <>
+                Status ·{" "}
+                <span className="font-semibold text-[#14110e]">
+                  {statusLabel}
+                </span>
+              </>
+            )}
+          </div>
+          {profile ? (
+            <div className="flex items-center gap-1.5">
+              <PlanBadge preset={profile.modulePreset} />
+              <span className="text-xs text-[#8a8173]">
+                Managed by the Dine First team
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      {restaurant ? (
+      {restaurant && showMenu ? (
         <div className="mt-8 overflow-hidden rounded-3xl border border-[#14110e]/8 bg-[#14110e] px-6 py-6 text-[#f4efe6] shadow-[0_20px_50px_rgba(20,17,14,0.12)] sm:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -134,7 +172,7 @@ export default function DashboardHomePage() {
       ) : null}
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        {actions.map((action) => {
+        {visibleActions.map((action) => {
           const Icon = action.icon;
           return (
             <Link

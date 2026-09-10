@@ -12,8 +12,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { adminFetch, AdminApiError } from "@/lib/admin/api-client";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import { PlanBadge } from "@/components/shared/plan-badge";
 import { OwnerModulesEditor } from "@/features/admin/components/owner-modules-editor";
-import type { OwnerModules, RestaurantApprovalStatus, RestaurantStatus, UserProfile } from "@/types";
+import type {
+  OwnerModules,
+  RestaurantApprovalStatus,
+  RestaurantStatus,
+  UserProfile,
+} from "@/types";
 
 type OwnerDetail = {
   owner: UserProfile;
@@ -25,6 +31,19 @@ type OwnerDetail = {
     approvalStatus: RestaurantApprovalStatus;
   }>;
 };
+
+function formatDate(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
 
 export default function AdminOwnerDetailPage() {
   const { uid } = useParams<{ uid: string }>();
@@ -72,7 +91,7 @@ export default function AdminOwnerDetailPage() {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-56" />
-        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-44 w-full" />
         <Skeleton className="h-40 w-full" />
       </div>
     );
@@ -92,6 +111,9 @@ export default function AdminOwnerDetailPage() {
   }
 
   const { owner, restaurants } = detail;
+  const initial = (owner.displayName || owner.email || "?")
+    .charAt(0)
+    .toUpperCase();
 
   return (
     <div className="space-y-6">
@@ -103,24 +125,38 @@ export default function AdminOwnerDetailPage() {
         Owners
       </Link>
 
-      <PageHeader
-        title={owner.displayName || "Owner"}
-        description={owner.email}
-      />
+      <div className="flex items-start gap-4">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#14110e] font-[family-name:var(--font-serif-display)] text-lg font-bold text-[#e6c875]">
+          {initial}
+        </div>
+        <div className="min-w-0">
+          <PageHeader
+            title={owner.displayName || "Owner"}
+            description={owner.email}
+          />
+        </div>
+      </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs font-medium uppercase tracking-wide text-[#8a8173]">
-        <span className="rounded-full bg-[#14110e]/5 px-2.5 py-1 text-[#14110e]">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#8a8173]">
+        <span className="rounded-full bg-[#14110e]/5 px-2.5 py-1 font-medium uppercase tracking-wide text-[#14110e]">
           {owner.accountStatus}
         </span>
+        <PlanBadge preset={owner.modulePreset} />
+        <span>Joined {formatDate(owner.createdAt)}</span>
         {owner.modulesUpdatedBy ? (
           <span>
-            Access set by {owner.modulesUpdatedBy}
+            · Access set by {owner.modulesUpdatedBy}
+            {owner.modulesUpdatedAt
+              ? ` on ${formatDate(owner.modulesUpdatedAt)}`
+              : ""}
           </span>
         ) : null}
       </div>
 
       <OwnerModulesEditor
         modules={owner.modules}
+        accountStatus={owner.accountStatus}
+        ownerName={owner.displayName || owner.email}
         busy={busy}
         onApply={(next: OwnerModules) =>
           patch({ modules: next }, "Module access updated")

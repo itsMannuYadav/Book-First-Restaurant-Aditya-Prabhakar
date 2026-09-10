@@ -11,6 +11,7 @@ import { BILL_STATUS_TRANSITIONS } from "@/constants/billing";
 import { cn } from "@/lib/utils";
 import { ownerFetch, OwnerApiError } from "@/lib/owner/api-client";
 import { BillStatusBadge } from "@/features/billing/components/bill-status-badge";
+import { BillLogo } from "@/features/billing/components/bill-logo";
 import { formatDateTime, formatMoney } from "@/features/billing/lib/format";
 import type { Bill } from "@/types";
 
@@ -105,16 +106,19 @@ export function BillDetail({
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#14110e]/8 bg-white">
-        <div className="border-b border-[#14110e]/8 p-5">
-          <p className="font-[family-name:var(--font-serif-display)] text-xl font-bold text-[#14110e]">
-            {snap.name}
-          </p>
-          <p className="mt-1 text-sm text-[#7a7164]">
-            {[snap.address, snap.phone].filter(Boolean).join(" · ") || "—"}
-          </p>
-          {snap.gstin ? (
-            <p className="text-xs text-[#8a8173]">GSTIN: {snap.gstin}</p>
-          ) : null}
+        <div className="flex items-start gap-4 border-b border-[#14110e]/8 p-5">
+          <BillLogo name={snap.name} logoUrl={snap.logoUrl} />
+          <div className="min-w-0">
+            <p className="font-[family-name:var(--font-serif-display)] text-xl font-bold text-[#14110e]">
+              {snap.name}
+            </p>
+            <p className="mt-1 text-sm text-[#7a7164]">
+              {[snap.address, snap.phone].filter(Boolean).join(" · ") || "—"}
+            </p>
+            {snap.gstin ? (
+              <p className="text-xs text-[#8a8173]">GSTIN: {snap.gstin}</p>
+            ) : null}
+          </div>
         </div>
 
         <div className="grid gap-4 p-5 sm:grid-cols-2">

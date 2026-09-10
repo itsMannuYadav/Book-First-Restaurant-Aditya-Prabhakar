@@ -9,6 +9,7 @@ import {
 } from "@/constants/modules";
 import type {
   AccountStatus,
+  AdminOwnerListItem,
   Category,
   MenuItemRecord,
   ModulePreset,
@@ -156,6 +157,46 @@ export async function adminListOwners(): Promise<UserProfile[]> {
 export async function adminListPendingOwners(): Promise<UserProfile[]> {
   const owners = await adminListOwners();
   return owners.filter((o) => o.accountStatus === "pending");
+}
+
+/** Owners plus a per-owner restaurant summary, for the admin owners table. */
+export async function adminListOwnersWithMeta(): Promise<AdminOwnerListItem[]> {
+  const db = getAdminDb();
+  const [usersSnap, restaurantsSnap] = await Promise.all([
+    db.collection(COLLECTIONS.users).get(),
+    db.collection(COLLECTIONS.restaurants).get(),
+  ]);
+
+  const byOwner = new Map<string, Restaurant[]>();
+  for (const d of restaurantsSnap.docs) {
+    const r = mapRestaurant(d.id, d.data());
+    const list = byOwner.get(r.ownerId) ?? [];
+    list.push(r);
+    byOwner.set(r.ownerId, list);
+  }
+
+  return usersSnap.docs
+    .map((d) => mapUser(d.id, d.data()))
+    .filter((u) => u.role !== "admin")
+    .map((owner) => {
+      const restaurants = (byOwner.get(owner.uid) ?? []).sort((a, b) =>
+        a.createdAt.localeCompare(b.createdAt),
+      );
+      const first = restaurants[0];
+      return {
+        ...owner,
+        restaurantCount: restaurants.length,
+        primaryRestaurant: first
+          ? {
+              id: first.id,
+              name: first.name,
+              slug: first.slug,
+              status: first.status,
+            }
+          : undefined,
+      } satisfies AdminOwnerListItem;
+    })
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function adminGetOwnerDetail(uid: string): Promise<{
@@ -552,6 +593,13 @@ export async function adminOverviewStats() {
     adminListOwners(),
     adminListRestaurants(),
   ]);
+  const ownersByPreset = {
+    core: owners.filter((o) => o.modulePreset === "core").length,
+    billing_only: owners.filter((o) => o.modulePreset === "billing_only").length,
+    full: owners.filter((o) => o.modulePreset === "full").length,
+    custom: owners.filter((o) => o.modulePreset === "custom").length,
+  };
+
   return {
     pendingApprovals: owners.filter((o) => o.accountStatus === "pending").length,
     suspendedOwners: owners.filter((o) => o.accountStatus === "suspended").length,
@@ -559,6 +607,8 @@ export async function adminOverviewStats() {
     totalRestaurants: restaurants.length,
     publishedRestaurants: restaurants.filter((r) => r.status === "published")
       .length,
+    ownersByPreset,
+    billingOwners: owners.filter((o) => o.modules.billing).length,
     recentRestaurants: restaurants.slice(0, 8),
   };
 }
