@@ -484,7 +484,7 @@ PLANNING DOC CREATED BY
 
 Mannu Yadav
 www.mannuyadav.com
-github.com/MannuYadav
+github.com/itsMannuYadav
 linkedin/in/MannuYadav
 
 - (*Note:* _Update your correct details these are just sample data_)
