@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Printer, ArrowLeft } from "lucide-react";
+import { Download, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/shared/page-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ROUTES } from "@/constants/routes";
 import { BILL_STATUS_TRANSITIONS } from "@/constants/billing";
 import { cn } from "@/lib/utils";
 import { ownerFetch, OwnerApiError } from "@/lib/owner/api-client";
+import { generateInvoicePdf } from "@/features/billing/lib/generate-invoice-pdf";
 import { BillStatusBadge } from "@/features/billing/components/bill-status-badge";
 import { BillLogo } from "@/features/billing/components/bill-logo";
 import { formatDateTime, formatMoney } from "@/features/billing/lib/format";
@@ -23,9 +24,21 @@ export function BillDetail({
   onChange: (next: Bill) => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const currency = bill.currency || "₹";
   const canPay = BILL_STATUS_TRANSITIONS[bill.status].includes("paid");
   const canVoid = BILL_STATUS_TRANSITIONS[bill.status].includes("void");
+
+  async function downloadPdf() {
+    setDownloading(true);
+    try {
+      await generateInvoicePdf(bill);
+    } catch {
+      toast.error("Couldn’t build the PDF. Open the print view and use Save as PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   async function setStatus(status: "paid" | "void") {
     if (status === "void" && !window.confirm("Void this bill? This can’t be undone.")) {
@@ -55,14 +68,22 @@ export function BillDetail({
         title={bill.billLabel || "Bill"}
         description={`Created ${formatDateTime(bill.createdAt)}`}
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={downloading}
+              onClick={() => void downloadPdf()}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <Download className="size-4" />
+              {downloading ? "Building…" : "Download PDF"}
+            </button>
             <Link
               href={ROUTES.billPrint(bill.id)}
               target="_blank"
-              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+              className="text-xs text-[#8a8173] underline underline-offset-2 hover:text-[#14110e]"
             >
-              <Printer className="size-4" />
-              Print / PDF
+              Print view
             </Link>
             {canPay ? (
               <button

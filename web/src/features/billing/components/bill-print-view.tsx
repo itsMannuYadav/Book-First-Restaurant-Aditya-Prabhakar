@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Download, Printer } from "lucide-react";
 import { BILL_STATUS_LABELS } from "@/constants/billing";
 import { BillLogo } from "@/features/billing/components/bill-logo";
 import { formatDate, formatMoney } from "@/features/billing/lib/format";
+import { generateInvoicePdf } from "@/features/billing/lib/generate-invoice-pdf";
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 import type { Bill } from "@/types";
 
 /** Standalone A4 tax invoice — rendered without the dashboard chrome. */
@@ -11,14 +16,43 @@ export function BillPrintView({ bill }: { bill: Bill }) {
   const currency = bill.currency || "₹";
   const snap = bill.restaurantSnapshot;
   const half = (bill.tax.rate / 2).toFixed(2);
+  const [downloading, setDownloading] = useState(false);
 
-  useEffect(() => {
-    const t = setTimeout(() => window.print(), 400);
-    return () => clearTimeout(t);
-  }, []);
+  async function download() {
+    setDownloading(true);
+    try {
+      await generateInvoicePdf(bill);
+    } catch {
+      toast.error("Couldn’t build the PDF. Use Print → Save as PDF instead.");
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#f3efe7] px-4 py-8 text-[#14110e] print:bg-white print:p-0">
+      <div className="mx-auto mb-4 flex max-w-[210mm] justify-end gap-2 print:hidden">
+        <button
+          type="button"
+          onClick={() => void download()}
+          disabled={downloading}
+          className={cn(
+            buttonVariants({ size: "sm" }),
+            "gap-2 bg-[#14110e] text-[#f4efe6] hover:bg-[#2a241c]",
+          )}
+        >
+          <Download className="size-4" />
+          {downloading ? "Building…" : "Download PDF"}
+        </button>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className={cn(buttonVariants({ size: "sm", variant: "outline" }), "gap-2")}
+        >
+          <Printer className="size-4" />
+          Print
+        </button>
+      </div>
       <div className="mx-auto w-full max-w-[210mm] rounded-xl bg-white p-8 shadow-sm print:rounded-none print:p-[14mm] print:shadow-none">
         {/* letterhead */}
         <div className="flex items-start justify-between gap-6 border-b-2 border-[#14110e] pb-5">
@@ -148,14 +182,6 @@ export function BillPrintView({ bill }: { bill: Bill }) {
           Thank you for your visit.
         </p>
       </div>
-
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="mx-auto mt-6 block rounded-lg border border-[#14110e]/20 bg-white px-4 py-2 text-sm print:hidden"
-      >
-        Print / Save as PDF
-      </button>
     </div>
   );
 }
