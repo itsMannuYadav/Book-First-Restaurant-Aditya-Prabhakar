@@ -349,7 +349,7 @@ export default function AdminOwnersPage() {
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-2xl border border-[#14110e]/8 bg-white">
-          <table className="w-full min-w-[780px] text-sm">
+          <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-[#14110e]/8 text-left text-xs text-[#8a8173]">
                 <th className="w-10 pl-5 pr-3 py-3">
@@ -366,7 +366,8 @@ export default function AdminOwnersPage() {
                 <th className="px-3 py-3 font-medium">Plan</th>
                 <th className="px-3 py-3 font-medium">Restaurant</th>
                 <th className="px-3 py-3 font-medium">Joined</th>
-                <th className="py-3 pl-3 pr-5 font-medium">Last action</th>
+                <th className="py-3 pl-3 pr-3 font-medium">Last action</th>
+                <th className="py-3 pr-5" />
               </tr>
             </thead>
             <tbody>
@@ -476,7 +477,7 @@ export default function AdminOwnersPage() {
                     <td className="px-3 py-4 text-xs text-[#7a7164]">
                       {formatDate(owner.createdAt)}
                     </td>
-                    <td className="py-4 pl-3 pr-5">
+                    <td className="py-4 pl-3 pr-3">
                       {(() => {
                         const action = lastAdminAction(owner);
                         if (!action)
@@ -500,6 +501,17 @@ export default function AdminOwnersPage() {
                           </div>
                         );
                       })()}
+                    </td>
+                    <td className="py-4 pr-5 text-right">
+                      <Link
+                        href={ROUTES.adminOwner(owner.uid)}
+                        className={cn(
+                          buttonVariants({ size: "sm", variant: "outline" }),
+                          "h-7 border-[#14110e]/15 text-xs text-[#5c554a] hover:text-[#14110e]",
+                        )}
+                      >
+                        View →
+                      </Link>
                     </td>
                   </tr>
                 );
