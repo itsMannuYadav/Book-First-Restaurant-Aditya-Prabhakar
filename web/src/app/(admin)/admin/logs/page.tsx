@@ -274,7 +274,7 @@ function LogRow({ log }: { log: AuditLog }) {
         onClick={() => hasMeta && setExpanded((e) => !e)}
       >
         {/* Time — fixed narrow */}
-        <td className="w-20 py-3 pr-3 align-top">
+        <td className="w-24 py-4 pl-5 pr-3 align-top">
           <span
             className="text-xs text-[#7a7164] whitespace-nowrap"
             title={formatAbsoluteTime(log.createdAt)}
@@ -284,7 +284,7 @@ function LogRow({ log }: { log: AuditLog }) {
         </td>
 
         {/* Admin */}
-        <td className="py-3 pr-4 align-top">
+        <td className="py-4 pr-4 align-top">
           <span
             className="block text-sm font-medium text-[#14110e] whitespace-nowrap"
             title={log.actorEmail}
@@ -294,12 +294,12 @@ function LogRow({ log }: { log: AuditLog }) {
         </td>
 
         {/* Action badge */}
-        <td className="py-3 pr-4 align-top">
+        <td className="py-4 pr-4 align-top">
           <ActionBadge action={log.action} />
         </td>
 
         {/* Target — human-readable name/email */}
-        <td className="py-3 pr-4 align-top">
+        <td className="py-4 pr-4 align-top">
           <span
             className="block max-w-[220px] truncate text-sm text-[#5c554a]"
             title={log.targetEmail ?? log.targetId}
@@ -309,7 +309,7 @@ function LogRow({ log }: { log: AuditLog }) {
         </td>
 
         {/* Expand toggle */}
-        <td className="w-8 py-3 align-top">
+        <td className="w-10 py-4 pr-4 align-top">
           {hasMeta ? (
             <button
               type="button"
@@ -332,7 +332,7 @@ function LogRow({ log }: { log: AuditLog }) {
 
       {expanded && hasMeta ? (
         <tr className="border-b border-[#14110e]/5 bg-[#faf7f1]/60">
-          <td colSpan={5} className="px-4 py-3">
+          <td colSpan={5} className="py-4 pl-5 pr-6">
             <MetaRow meta={log.meta} />
           </td>
         </tr>
@@ -346,19 +346,19 @@ function SkeletonRows() {
     <>
       {Array.from({ length: 8 }).map((_, i) => (
         <tr key={i} className="border-b border-[#14110e]/5">
-          <td className="py-3 pr-3">
+          <td className="py-4 pl-5 pr-3">
             <Skeleton className="h-3.5 w-14" />
           </td>
-          <td className="py-3 pr-4">
+          <td className="py-4 pr-4">
             <Skeleton className="h-4 w-40" />
           </td>
-          <td className="py-3 pr-4">
+          <td className="py-4 pr-4">
             <Skeleton className="h-5 w-28 rounded-full" />
           </td>
-          <td className="py-3 pr-4">
+          <td className="py-4 pr-4">
             <Skeleton className="h-4 w-32" />
           </td>
-          <td className="py-3">
+          <td className="py-4 pr-4">
             <Skeleton className="h-4 w-4" />
           </td>
         </tr>
@@ -529,7 +529,7 @@ export default function LogsPage() {
           <table className="w-full min-w-[580px] text-sm">
             <thead>
               <tr className="border-b border-[#14110e]/8 bg-[#faf7f1]">
-                <th className="py-3 pr-3 pl-4 text-left text-xs font-semibold uppercase tracking-wide text-[#8a8173]">
+                <th className="py-3 pl-5 pr-3 text-left text-xs font-semibold uppercase tracking-wide text-[#8a8173]">
                   Time
                 </th>
                 <th className="py-3 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-[#8a8173]">
