@@ -25,6 +25,7 @@ export const ROUTES = {
   adminRestaurants: "/admin/restaurants",
   adminRestaurant: (id: string) => `/admin/restaurants/${id}`,
   adminRestaurantMenu: (id: string) => `/admin/restaurants/${id}/menu`,
+  adminLogs: "/admin/logs",
 } as const;
 
 /** `module` gates visibility + access; undefined = always shown. */
@@ -49,4 +50,5 @@ export const ADMIN_NAV = [
   { href: ROUTES.adminApprovals, label: "Approvals" },
   { href: ROUTES.adminRestaurants, label: "Restaurants" },
   { href: ROUTES.adminOwners, label: "Owners" },
+  { href: ROUTES.adminLogs, label: "Logs" },
 ] as const;

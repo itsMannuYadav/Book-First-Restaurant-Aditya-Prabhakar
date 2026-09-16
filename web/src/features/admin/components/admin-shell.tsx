@@ -8,6 +8,7 @@ import {
   BadgeCheck,
   Store,
   Users,
+  ScrollText,
   LogOut,
   Menu,
   X,
@@ -29,6 +30,7 @@ const ICONS = {
   [ROUTES.adminApprovals]: BadgeCheck,
   [ROUTES.adminRestaurants]: Store,
   [ROUTES.adminOwners]: Users,
+  [ROUTES.adminLogs]: ScrollText,
 } as const;
 
 const HIGHLIGHT_HREF: Record<
