@@ -349,10 +349,10 @@ export default function AdminOwnersPage() {
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-2xl border border-[#14110e]/8 bg-white">
-          <table className="w-full min-w-[860px] text-sm">
+          <table className="w-full min-w-[780px] text-sm">
             <thead>
               <tr className="border-b border-[#14110e]/8 text-left text-xs text-[#8a8173]">
-                <th className="w-10 px-3 py-3">
+                <th className="w-10 pl-5 pr-3 py-3">
                   <input
                     type="checkbox"
                     aria-label="Select all"
@@ -366,8 +366,7 @@ export default function AdminOwnersPage() {
                 <th className="px-3 py-3 font-medium">Plan</th>
                 <th className="px-3 py-3 font-medium">Restaurant</th>
                 <th className="px-3 py-3 font-medium">Joined</th>
-                <th className="px-3 py-3 font-medium">Last action</th>
-                <th className="px-3 py-3 font-medium" />
+                <th className="py-3 pl-3 pr-5 font-medium">Last action</th>
               </tr>
             </thead>
             <tbody>
@@ -378,7 +377,7 @@ export default function AdminOwnersPage() {
                     key={owner.uid}
                     className="border-b border-[#14110e]/5 last:border-0 align-top transition-colors hover:bg-[#14110e]/[0.02]"
                   >
-                    <td className="px-3 py-3">
+                    <td className="pl-5 pr-3 py-4">
                       <input
                         type="checkbox"
                         aria-label={`Select ${owner.displayName}`}
@@ -387,7 +386,7 @@ export default function AdminOwnersPage() {
                         className="size-4 accent-[#14110e]"
                       />
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-4">
                       <Link
                         href={ROUTES.adminOwner(owner.uid)}
                         className="font-medium text-[#14110e] hover:underline"
@@ -401,7 +400,7 @@ export default function AdminOwnersPage() {
                         </p>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-4">
                       <StatusBadge status={owner.accountStatus} />
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {owner.accountStatus !== "active" ? (
@@ -444,7 +443,7 @@ export default function AdminOwnersPage() {
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-4">
                       <PresetPicker
                         compact
                         disabled={rowBusy}
@@ -457,7 +456,7 @@ export default function AdminOwnersPage() {
                         </p>
                       ) : null}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="px-3 py-4">
                       {owner.primaryRestaurant ? (
                         <div>
                           <span className="text-[#14110e]">
@@ -474,10 +473,10 @@ export default function AdminOwnersPage() {
                         <span className="text-[#8a8173]">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-xs text-[#7a7164]">
+                    <td className="px-3 py-4 text-xs text-[#7a7164]">
                       {formatDate(owner.createdAt)}
                     </td>
-                    <td className="px-3 py-3">
+                    <td className="py-4 pl-3 pr-5">
                       {(() => {
                         const action = lastAdminAction(owner);
                         if (!action)
@@ -501,17 +500,6 @@ export default function AdminOwnersPage() {
                           </div>
                         );
                       })()}
-                    </td>
-                    <td className="px-3 py-3 text-right">
-                      <Link
-                        href={ROUTES.adminOwner(owner.uid)}
-                        className={cn(
-                          buttonVariants({ size: "sm", variant: "outline" }),
-                          "h-7 border-[#14110e]/15 text-xs text-[#5c554a] hover:text-[#14110e]",
-                        )}
-                      >
-                        View →
-                      </Link>
                     </td>
                   </tr>
                 );
