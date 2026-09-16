@@ -46,6 +46,50 @@ function formatDate(iso: string): string {
   }
 }
 
+function formatRelativeTime(iso: string): string {
+  if (!iso) return "—";
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60_000);
+    const hours = Math.floor(diff / 3_600_000);
+    const days = Math.floor(diff / 86_400_000);
+    if (mins < 2) return "just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return formatDate(iso);
+  } catch {
+    return formatDate(iso);
+  }
+}
+
+function lastAdminAction(owner: AdminOwnerListItem): {
+  label: string;
+  at: string;
+  by: string;
+} | null {
+  const events: Array<{ label: string; at: string; by: string }> = [];
+  if (owner.suspendedAt) {
+    events.push({
+      label: "Suspended",
+      at: owner.suspendedAt,
+      by: owner.suspendedBy ?? "admin",
+    });
+  }
+  if (owner.approvedAt && owner.approvedBy) {
+    events.push({ label: "Approved", at: owner.approvedAt, by: owner.approvedBy });
+  }
+  if (owner.modulesUpdatedAt && owner.modulesUpdatedBy) {
+    events.push({
+      label: "Plan changed",
+      at: owner.modulesUpdatedAt,
+      by: owner.modulesUpdatedBy,
+    });
+  }
+  if (events.length === 0) return null;
+  return events.sort((a, b) => b.at.localeCompare(a.at))[0];
+}
+
 function StatusBadge({ status }: { status: AccountStatus }) {
   const styles: Record<AccountStatus, string> = {
     active: "bg-emerald-100 text-emerald-800 border border-emerald-200",
@@ -322,6 +366,7 @@ export default function AdminOwnersPage() {
                 <th className="px-3 py-3 font-medium">Plan</th>
                 <th className="px-3 py-3 font-medium">Restaurant</th>
                 <th className="px-3 py-3 font-medium">Joined</th>
+                <th className="px-3 py-3 font-medium">Last action</th>
                 <th className="px-3 py-3 font-medium" />
               </tr>
             </thead>
@@ -431,6 +476,31 @@ export default function AdminOwnersPage() {
                     </td>
                     <td className="px-3 py-3 text-xs text-[#7a7164]">
                       {formatDate(owner.createdAt)}
+                    </td>
+                    <td className="px-3 py-3">
+                      {(() => {
+                        const action = lastAdminAction(owner);
+                        if (!action)
+                          return (
+                            <span className="text-xs text-[#8a8173]">—</span>
+                          );
+                        return (
+                          <div>
+                            <p className="text-xs font-medium text-[#14110e]">
+                              {action.label}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-[#7a7164]">
+                              {formatRelativeTime(action.at)}
+                            </p>
+                            <p
+                              className="mt-0.5 max-w-[160px] truncate text-[11px] text-[#8a8173]"
+                              title={action.by}
+                            >
+                              by {action.by}
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="px-3 py-3 text-right">
                       <Link

@@ -43,6 +43,7 @@ function mapUser(id: string, data: DocumentData): UserProfile {
     approvedAt: data.approvedAt ? String(data.approvedAt) : undefined,
     approvedBy: data.approvedBy ? String(data.approvedBy) : undefined,
     suspendedAt: data.suspendedAt ? String(data.suspendedAt) : undefined,
+    suspendedBy: data.suspendedBy ? String(data.suspendedBy) : undefined,
     suspendReason: data.suspendReason ? String(data.suspendReason) : undefined,
     createdAt: String(data.createdAt ?? ""),
     updatedAt: String(data.updatedAt ?? ""),
@@ -308,6 +309,7 @@ export async function adminPatchOwner(
     }
     if (patch.accountStatus === "suspended") {
       next.suspendedAt = timestamp;
+      next.suspendedBy = patch.actorEmail;
       next.suspendReason = patch.suspendReason?.trim() || "Suspended by admin";
     }
     if (patch.accountStatus === "pending") {

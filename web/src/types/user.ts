@@ -19,6 +19,7 @@ export interface UserProfile {
   approvedAt?: string;
   approvedBy?: string;
   suspendedAt?: string;
+  suspendedBy?: string;
   suspendReason?: string;
   createdAt: string;
   updatedAt: string;
