@@ -28,7 +28,7 @@ export const MODULE_PRESETS: Record<
 };
 
 export const PRESET_LABELS: Record<ModulePreset, string> = {
-  core: "Core (menu + orders)",
+  core: "Menu + Orders",
   menu_only: "Menu only",
   billing_only: "Billing only",
   full: "Full (everything)",
@@ -37,7 +37,7 @@ export const PRESET_LABELS: Record<ModulePreset, string> = {
 
 /** Compact labels for tight spots (table cells, chips). */
 export const PRESET_SHORT: Record<ModulePreset, string> = {
-  core: "Core",
+  core: "Menu+Orders",
   menu_only: "Menu",
   billing_only: "Billing",
   full: "Full",
