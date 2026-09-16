@@ -8,6 +8,7 @@ interface MenuItemCardProps {
   item: MenuItem;
   currency: string;
   quantity: number;
+  canOrder: boolean;
   onAdd: (itemId: string) => void;
 }
 
@@ -15,6 +16,7 @@ export function MenuItemCard({
   item,
   currency,
   quantity,
+  canOrder,
   onAdd,
 }: MenuItemCardProps) {
   const isVeg = item.tags?.includes("veg");
@@ -52,13 +54,15 @@ export function MenuItemCard({
           <span />
         )}
 
-        <button
-          type="button"
-          onClick={() => onAdd(item.id)}
-          className="flex items-center gap-1.5 rounded-full border border-[var(--menu-border)] bg-[var(--menu-pill)] px-3.5 py-1.5 text-[0.82rem] font-semibold text-[var(--menu-text)] transition-all duration-200 hover:border-transparent hover:bg-[image:var(--menu-pill-active)] hover:text-[var(--menu-pill-active-text)]"
-        >
-          {quantity > 0 ? `✓ Added (${quantity})` : "+ Add"}
-        </button>
+        {canOrder ? (
+          <button
+            type="button"
+            onClick={() => onAdd(item.id)}
+            className="flex items-center gap-1.5 rounded-full border border-[var(--menu-border)] bg-[var(--menu-pill)] px-3.5 py-1.5 text-[0.82rem] font-semibold text-[var(--menu-text)] transition-all duration-200 hover:border-transparent hover:bg-[image:var(--menu-pill-active)] hover:text-[var(--menu-pill-active-text)]"
+          >
+            {quantity > 0 ? `✓ Added (${quantity})` : "+ Add"}
+          </button>
+        ) : null}
       </div>
     </article>
   );

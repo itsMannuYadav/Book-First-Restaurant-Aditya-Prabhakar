@@ -6,6 +6,7 @@ import { MenuItemCard } from "@/features/menu-public/components/menu-item-card";
 interface CategorySectionProps {
   category: MenuCategory;
   currency: string;
+  canOrder: boolean;
   selection: Record<string, number>;
   onAdd: (itemId: string) => void;
 }
@@ -13,6 +14,7 @@ interface CategorySectionProps {
 export function CategorySection({
   category,
   currency,
+  canOrder,
   selection,
   onAdd,
 }: CategorySectionProps) {
@@ -48,6 +50,7 @@ export function CategorySection({
             key={item.id}
             item={item}
             currency={currency}
+            canOrder={canOrder}
             quantity={selection[item.id] ?? 0}
             onAdd={onAdd}
           />

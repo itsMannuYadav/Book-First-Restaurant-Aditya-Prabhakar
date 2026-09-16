@@ -35,11 +35,12 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
   } = usePublicMenu(menu);
 
   const { restaurant } = menu;
+  const canOrder = Boolean(restaurant.orderingEnabled);
 
   return (
     <div
       data-menu-theme={theme}
-      className="menu-shell relative min-h-screen bg-[var(--menu-page)] pb-36 text-[var(--menu-text)] transition-colors duration-350 overflow-hidden"
+      className={`menu-shell relative min-h-screen bg-[var(--menu-page)] text-[var(--menu-text)] transition-colors duration-350 overflow-hidden ${canOrder ? "pb-36" : "pb-10"}`}
     >
       {theme === "savan" && <SavanOverlay />}
       <MenuTopBar
@@ -73,6 +74,7 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
               key={category.id}
               category={category}
               currency={restaurant.currency}
+              canOrder={canOrder}
               selection={selection}
               onAdd={addItem}
             />
@@ -80,18 +82,20 @@ export function PublicMenuView({ menu }: PublicMenuViewProps) {
         )}
       </main>
 
-      <SelectionBar
-        restaurant={restaurant}
-        count={selectionCount}
-        total={selectionTotal}
-        currency={restaurant.currency}
-        lines={selectionLines}
-        isOpen={isSelectionOpen}
-        onOpenChange={setIsSelectionOpen}
-        onClear={clearSelection}
-        onIncrement={addItem}
-        onDecrement={removeItem}
-      />
+      {canOrder ? (
+        <SelectionBar
+          restaurant={restaurant}
+          count={selectionCount}
+          total={selectionTotal}
+          currency={restaurant.currency}
+          lines={selectionLines}
+          isOpen={isSelectionOpen}
+          onOpenChange={setIsSelectionOpen}
+          onClear={clearSelection}
+          onIncrement={addItem}
+          onDecrement={removeItem}
+        />
+      ) : null}
     </div>
   );
 }
