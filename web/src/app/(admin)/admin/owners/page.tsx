@@ -46,6 +46,24 @@ function formatDate(iso: string): string {
   }
 }
 
+function StatusBadge({ status }: { status: AccountStatus }) {
+  const styles: Record<AccountStatus, string> = {
+    active: "bg-emerald-100 text-emerald-800 border border-emerald-200",
+    pending: "bg-amber-100 text-amber-800 border border-amber-200",
+    suspended: "bg-red-100 text-red-800 border border-red-200",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize",
+        styles[status],
+      )}
+    >
+      {status}
+    </span>
+  );
+}
+
 export default function AdminOwnersPage() {
   const [owners, setOwners] = useState<AdminOwnerListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +76,8 @@ export default function AdminOwnersPage() {
   const [confirm, setConfirm] = useState<
     | { kind: "single"; uid: string; name: string; modules: OwnerModules }
     | { kind: "bulk"; preset: Exclude<ModulePreset, "custom"> }
+    | { kind: "suspend"; uid: string; name: string }
+    | { kind: "approve"; uid: string; name: string }
     | null
   >(null);
 
@@ -158,19 +178,22 @@ export default function AdminOwnersPage() {
     }
   }
 
-  async function quickStatus(uid: string, accountStatus: AccountStatus) {
+  async function applyStatus(uid: string, accountStatus: AccountStatus) {
     setBusyId(uid);
     try {
       await adminFetch(`/api/admin/owners/${uid}`, {
         method: "PATCH",
         body: JSON.stringify({ accountStatus }),
       });
-      toast.success(`Owner ${accountStatus}`);
+      toast.success(
+        accountStatus === "active" ? "Owner approved" : "Owner suspended",
+      );
       await refresh();
     } catch (err) {
       toast.error(err instanceof AdminApiError ? err.message : "Update failed");
     } finally {
       setBusyId(null);
+      setConfirm(null);
     }
   }
 
@@ -308,7 +331,7 @@ export default function AdminOwnersPage() {
                 return (
                   <tr
                     key={owner.uid}
-                    className="border-b border-[#14110e]/5 last:border-0 align-top"
+                    className="border-b border-[#14110e]/5 last:border-0 align-top transition-colors hover:bg-[#14110e]/[0.02]"
                   >
                     <td className="px-3 py-3">
                       <input
@@ -334,16 +357,23 @@ export default function AdminOwnersPage() {
                       ) : null}
                     </td>
                     <td className="px-3 py-3">
-                      <span className="text-xs font-medium uppercase tracking-wide text-[#5c554a]">
-                        {owner.accountStatus}
-                      </span>
-                      <div className="mt-1 flex gap-1">
+                      <StatusBadge status={owner.accountStatus} />
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {owner.accountStatus !== "active" ? (
                           <button
                             type="button"
                             disabled={rowBusy}
-                            onClick={() => void quickStatus(owner.uid, "active")}
-                            className="text-[11px] text-[#14110e] underline underline-offset-2 disabled:opacity-50"
+                            onClick={() =>
+                              setConfirm({
+                                kind: "approve",
+                                uid: owner.uid,
+                                name: owner.displayName || owner.email,
+                              })
+                            }
+                            className={cn(
+                              buttonVariants({ size: "sm", variant: "outline" }),
+                              "h-7 border-emerald-200 bg-emerald-50 text-xs text-emerald-800 hover:bg-emerald-100 disabled:opacity-50",
+                            )}
                           >
                             Approve
                           </button>
@@ -353,9 +383,16 @@ export default function AdminOwnersPage() {
                             type="button"
                             disabled={rowBusy}
                             onClick={() =>
-                              void quickStatus(owner.uid, "suspended")
+                              setConfirm({
+                                kind: "suspend",
+                                uid: owner.uid,
+                                name: owner.displayName || owner.email,
+                              })
                             }
-                            className="text-[11px] text-destructive underline underline-offset-2 disabled:opacity-50"
+                            className={cn(
+                              buttonVariants({ size: "sm", variant: "outline" }),
+                              "h-7 border-red-200 bg-red-50 text-xs text-red-700 hover:bg-red-100 disabled:opacity-50",
+                            )}
                           >
                             Suspend
                           </button>
@@ -398,9 +435,12 @@ export default function AdminOwnersPage() {
                     <td className="px-3 py-3 text-right">
                       <Link
                         href={ROUTES.adminOwner(owner.uid)}
-                        className="text-xs text-[#8a8173] underline underline-offset-2 hover:text-[#14110e]"
+                        className={cn(
+                          buttonVariants({ size: "sm", variant: "outline" }),
+                          "h-7 border-[#14110e]/15 text-xs text-[#5c554a] hover:text-[#14110e]",
+                        )}
                       >
-                        View
+                        View →
                       </Link>
                     </td>
                   </tr>
@@ -415,12 +455,26 @@ export default function AdminOwnersPage() {
         open={confirm !== null}
         onOpenChange={(open) => !open && setConfirm(null)}
         title={
-          confirm?.kind === "bulk"
-            ? `Set ${selected.size} owners to ${PRESET_LABELS[confirm.preset]}?`
-            : "Change module access?"
+          confirm?.kind === "suspend"
+            ? `Suspend ${confirm.name}?`
+            : confirm?.kind === "approve"
+              ? `Approve ${confirm.name}?`
+              : confirm?.kind === "bulk"
+                ? `Set ${selected.size} owners to ${PRESET_LABELS[confirm.preset]}?`
+                : "Change module access?"
         }
         description={
-          confirm?.kind === "bulk" ? (
+          confirm?.kind === "suspend" ? (
+            <>
+              <strong>{confirm.name}</strong> will immediately lose access to
+              their dashboard. You can re-approve them at any time.
+            </>
+          ) : confirm?.kind === "approve" ? (
+            <>
+              <strong>{confirm.name}</strong> will be able to sign in and use
+              their dashboard.
+            </>
+          ) : confirm?.kind === "bulk" ? (
             <>
               Each selected owner&apos;s access becomes{" "}
               <strong>{PRESET_LABELS[confirm.preset]}</strong>. They see it on
@@ -434,9 +488,20 @@ export default function AdminOwnersPage() {
             </>
           ) : null
         }
-        confirmLabel="Change access"
+        confirmLabel={
+          confirm?.kind === "suspend"
+            ? "Yes, suspend"
+            : confirm?.kind === "approve"
+              ? "Yes, approve"
+              : "Change access"
+        }
+        destructive={confirm?.kind === "suspend"}
         busy={busyId !== null}
         onConfirm={() => {
+          if (confirm?.kind === "suspend")
+            return applyStatus(confirm.uid, "suspended");
+          if (confirm?.kind === "approve")
+            return applyStatus(confirm.uid, "active");
           if (confirm?.kind === "bulk") return applyBulk(confirm.preset);
           if (confirm?.kind === "single")
             return applySingle(confirm.uid, confirm.modules);
