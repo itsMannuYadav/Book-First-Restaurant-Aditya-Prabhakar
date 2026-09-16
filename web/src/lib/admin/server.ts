@@ -249,10 +249,16 @@ async function syncOwnerModules(
   if (restaurants.empty) return;
   const batch = db.batch();
   for (const doc of restaurants.docs) {
-    batch.update(doc.ref, {
+    const update: Record<string, unknown> = {
       menuPublicEnabled: modules.menu,
       updatedAt: timestamp,
-    });
+    };
+    // Revoking the orders module must also turn off live ordering — the
+    // owner has no UI to re-enable it while the module is off (see
+    // restaurant-form.tsx's canEnableOrdering gate), so this only ever
+    // flips true -> false.
+    if (!modules.orders) update.orderingEnabled = false;
+    batch.update(doc.ref, update);
   }
   await batch.commit();
 }
@@ -593,8 +599,9 @@ export async function adminOverviewStats() {
     adminListOwners(),
     adminListRestaurants(),
   ]);
-  const ownersByPreset = {
+  const ownersByPreset: Record<ModulePreset, number> = {
     core: owners.filter((o) => o.modulePreset === "core").length,
+    menu_only: owners.filter((o) => o.modulePreset === "menu_only").length,
     billing_only: owners.filter((o) => o.modulePreset === "billing_only").length,
     full: owners.filter((o) => o.modulePreset === "full").length,
     custom: owners.filter((o) => o.modulePreset === "custom").length,

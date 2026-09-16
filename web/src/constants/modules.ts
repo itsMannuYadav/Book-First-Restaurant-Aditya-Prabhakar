@@ -22,12 +22,14 @@ export const MODULE_PRESETS: Record<
   OwnerModules
 > = {
   core: { menu: true, orders: true, billing: false },
+  menu_only: { menu: true, orders: false, billing: false },
   billing_only: { menu: false, orders: false, billing: true },
   full: { menu: true, orders: true, billing: true },
 };
 
 export const PRESET_LABELS: Record<ModulePreset, string> = {
   core: "Core (menu + orders)",
+  menu_only: "Menu only",
   billing_only: "Billing only",
   full: "Full (everything)",
   custom: "Custom",
@@ -36,6 +38,7 @@ export const PRESET_LABELS: Record<ModulePreset, string> = {
 /** Compact labels for tight spots (table cells, chips). */
 export const PRESET_SHORT: Record<ModulePreset, string> = {
   core: "Core",
+  menu_only: "Menu",
   billing_only: "Billing",
   full: "Full",
   custom: "Custom",
@@ -70,7 +73,7 @@ export function normalizeModules(
 
 /** Which stored preset (if any) a set of flags matches, else "custom". */
 export function detectPreset(modules: OwnerModules): ModulePreset {
-  for (const name of ["core", "billing_only", "full"] as const) {
+  for (const name of ["core", "menu_only", "billing_only", "full"] as const) {
     const preset = MODULE_PRESETS[name];
     if (MODULE_KEYS.every((k) => preset[k] === modules[k])) return name;
   }

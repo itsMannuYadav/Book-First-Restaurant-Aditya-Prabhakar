@@ -23,7 +23,13 @@ type OverviewResponse = {
   recentRestaurants: Array<Restaurant & { ownerEmail?: string }>;
 };
 
-const PLAN_ORDER: ModulePreset[] = ["core", "billing_only", "full", "custom"];
+const PLAN_ORDER: ModulePreset[] = [
+  "core",
+  "menu_only",
+  "billing_only",
+  "full",
+  "custom",
+];
 
 export default function AdminOverviewPage() {
   const [data, setData] = useState<OverviewResponse | null>(null);
@@ -126,7 +132,7 @@ export default function AdminOverviewPage() {
             billing
           </span>
         </div>
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
           {PLAN_ORDER.map((preset) => (
             <Link
               key={preset}

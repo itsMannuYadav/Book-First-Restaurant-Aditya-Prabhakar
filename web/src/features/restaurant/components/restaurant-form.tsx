@@ -153,6 +153,7 @@ function RestaurantFormFields({
   initial: FormState;
   publishAllowed: boolean;
 }) {
+  const { hasModule } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pending, setPending] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -168,7 +169,9 @@ function RestaurantFormFields({
 
   const hasPin = Boolean(form.lat.trim() && form.lng.trim());
   const canEnableOrdering =
-    activeTableCount > 0 && (!form.requireGuestGps || hasPin);
+    hasModule("orders") &&
+    activeTableCount > 0 &&
+    (!form.requireGuestGps || hasPin);
 
   function useMyLocation() {
     if (!navigator.geolocation) {
@@ -317,6 +320,7 @@ function RestaurantFormFields({
       requireGuestGps: form.requireGuestGps,
       orderingEnabled:
         form.orderingEnabled &&
+        hasModule("orders") &&
         activeTableCount > 0 &&
         (!form.requireGuestGps || Boolean(location)),
       tables: form.tables.map((t) => ({
@@ -889,13 +893,15 @@ function RestaurantFormFields({
               Enable dine-in ordering
             </span>
             <span className="mt-0.5 block text-xs text-[#7a7164]">
-              {canEnableOrdering
-                ? form.requireGuestGps
-                  ? "Guests on your published menu can place table tickets when they are nearby."
-                  : "Guests can place table tickets without a location check."
-                : form.requireGuestGps
-                  ? "Add a venue pin and at least one active table first."
-                  : "Add at least one active table first."}
+              {!hasModule("orders")
+                ? "Your plan doesn't include the ordering module. Ask an admin to enable it."
+                : canEnableOrdering
+                  ? form.requireGuestGps
+                    ? "Guests on your published menu can place table tickets when they are nearby."
+                    : "Guests can place table tickets without a location check."
+                  : form.requireGuestGps
+                    ? "Add a venue pin and at least one active table first."
+                    : "Add at least one active table first."}
             </span>
           </span>
         </label>

@@ -14,6 +14,7 @@ import type { ModulePreset, OwnerModules } from "@/types";
 
 const PRESET_CHOICES: Array<Exclude<ModulePreset, "custom">> = [
   "core",
+  "menu_only",
   "billing_only",
   "full",
 ];

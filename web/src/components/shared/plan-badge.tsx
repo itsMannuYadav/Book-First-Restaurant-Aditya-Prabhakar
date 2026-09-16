@@ -4,6 +4,7 @@ import type { ModulePreset } from "@/types";
 
 const STYLES: Record<ModulePreset, string> = {
   core: "bg-[#14110e]/5 text-[#14110e]",
+  menu_only: "bg-sky-100 text-sky-900",
   billing_only: "bg-amber-100 text-amber-900",
   full: "bg-emerald-100 text-emerald-900",
   custom: "border border-[#14110e]/20 text-[#5c554a]",

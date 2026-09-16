@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   LayoutDashboard,
   ClipboardList,
+  Receipt,
   Store,
   Layers3,
   UtensilsCrossed,
@@ -24,6 +25,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: ROUTES.ownerDemo, label: "Dashboard", icon: LayoutDashboard, locked: false },
   { href: ROUTES.signup, label: "Orders", icon: ClipboardList, locked: true },
+  { href: ROUTES.signup, label: "Billing", icon: Receipt, locked: true },
   { href: ROUTES.signup, label: "Restaurant", icon: Store, locked: true },
   { href: ROUTES.signup, label: "Categories", icon: Layers3, locked: true },
   { href: ROUTES.signup, label: "Menu Items", icon: UtensilsCrossed, locked: true },

@@ -8,4 +8,9 @@ export type ModuleKey = "menu" | "orders" | "billing";
 export type OwnerModules = Record<ModuleKey, boolean>;
 
 /** Named bundles the admin picks from. `custom` = hand-tuned flags. */
-export type ModulePreset = "core" | "billing_only" | "full" | "custom";
+export type ModulePreset =
+  | "core"
+  | "menu_only"
+  | "billing_only"
+  | "full"
+  | "custom";

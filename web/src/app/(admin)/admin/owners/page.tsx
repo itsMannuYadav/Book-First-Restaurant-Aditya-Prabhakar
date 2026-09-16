@@ -27,6 +27,7 @@ const STATUS_TABS: StatusFilter[] = ["all", "pending", "active", "suspended"];
 const PLAN_OPTIONS: PlanFilter[] = [
   "all",
   "core",
+  "menu_only",
   "billing_only",
   "full",
   "custom",
@@ -245,7 +246,7 @@ export default function AdminOwnersPage() {
             {selected.size} selected
           </span>
           <span className="text-[#8a8173]">· set plan to</span>
-          {(["core", "billing_only", "full"] as const).map((p) => (
+          {(["core", "menu_only", "billing_only", "full"] as const).map((p) => (
             <button
               key={p}
               type="button"

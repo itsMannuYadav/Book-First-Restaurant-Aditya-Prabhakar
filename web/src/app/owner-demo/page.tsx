@@ -9,6 +9,7 @@ import {
   Layers3,
   Lock,
   QrCode,
+  Receipt,
   Store,
   UtensilsCrossed,
 } from "lucide-react";
@@ -40,6 +41,11 @@ const actions = [
     title: "Orders",
     body: "Confirm, decline, and complete dine-in tickets.",
     icon: ClipboardList,
+  },
+  {
+    title: "Billing",
+    body: "Raise and send customer invoices instantly.",
+    icon: Receipt,
   },
   {
     title: "Restaurant",
@@ -287,8 +293,8 @@ export default function OwnerDemoPage() {
             Ready to run your own restaurant like this?
           </p>
           <p className="mt-2 text-[#c9b896]">
-            Create your workspace, publish your menu, and start taking dine-in
-            orders in minutes.
+            Create your workspace, publish your menu, manage orders, and send
+            customer invoices — all in one place.
           </p>
           <Link
             href={ROUTES.signup}

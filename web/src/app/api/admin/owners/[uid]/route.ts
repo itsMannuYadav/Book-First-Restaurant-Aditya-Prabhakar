@@ -29,7 +29,9 @@ const patchSchema = z
   .object({
     accountStatus: z.enum(["pending", "active", "suspended"]).optional(),
     suspendReason: z.string().optional(),
-    preset: z.enum(["core", "billing_only", "full", "custom"]).optional(),
+    preset: z
+      .enum(["core", "menu_only", "billing_only", "full", "custom"])
+      .optional(),
     modules: z
       .object({
         menu: z.boolean(),

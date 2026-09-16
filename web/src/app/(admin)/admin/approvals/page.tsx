@@ -49,11 +49,8 @@ export default function AdminApprovalsPage() {
   }, [refresh]);
 
   function modulesFor(uid: string): OwnerModules {
-    return MODULE_PRESETS[presetByUid[uid] === "billing_only"
-      ? "billing_only"
-      : presetByUid[uid] === "full"
-        ? "full"
-        : "core"];
+    const preset = presetByUid[uid];
+    return MODULE_PRESETS[preset && preset !== "custom" ? preset : "core"];
   }
 
   async function approve(uid: string) {
